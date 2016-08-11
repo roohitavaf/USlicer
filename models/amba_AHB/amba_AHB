@@ -1,0 +1,1704 @@
+
+
+
+
+
+
+
+
+
+
+
+//#define DEBUG
+//this is the delay all PEQs do realize. In the original model this is 1 PS but no process interferes with it so we can extend the period to 1 NS in order to have a unified time resolution. 
+
+struct data
+{
+ //seems as if this has to be data, errors if not
+    typedef data tlm_payload_type;
+ //unused in our case but still necessary
+   typedef int tlm_phase_type;
+
+ int address;
+    unsigned int amba_id;
+  unsigned int *burst_size;
+ unsigned int command;
+ unsigned int data_length;
+ unsigned int *data_ptr; //containing the reference of the submitted value
+ int response_status; //the same type as tlm::TLM_OK_RESPONSE in real model
+ int streaming_width;
+ int *trans_type;
+
+ //dummy methods for being able to compile
+    bool has_mm() { return false; }
+   void set_mm(bool mm) { return; }
+   void set_auto_extension(void *x) { return; }
+ //these seem to be used for a kind of pooling for payloads
+ //we don't use it here
+   void acquire() { return; }
+   void release() { return; }
+   int get_ref_count() { return 1; }
+};
+
+struct tlmdata
+{
+ //seems as if this has to be data, errors if not
+    typedef tlmdata tlm_payload_type;
+ //unused in our case but still necessary
+   typedef int tlm_phase_type;
+
+ //containing the submitted value
+ int address;
+ unsigned int command;
+    unsigned int *data_ptr;
+ unsigned int data_length;
+ int response_status; //the same type as tlm::TLM_OK_RESPONSE in real model
+   int streaming_width;
+
+ //dummy methods for being able to compile
+    bool has_mm() { return false; }
+   void set_mm(bool mm) { return; }
+   void set_auto_extension(void* x) { return; }
+   void acquire() { return; }
+   void release() { return; }
+   int get_ref_count() { return 1; }
+
+};
+
+
+//Set MASTER_N!=1 if there are multiple slaves and arbiter should have multimaster socket
+//set SLAVE_N!=1 if there are multiple masters and arbiter should have multisalve socket
+class ahb_simple_bus: public sc_core::sc_module, public tlm::tlm_bw_transport_if<data>, public tlm::tlm_fw_transport_if<data>
+{
+public:
+
+    tlm::tlm_initiator_socket<32, data, 0> master_sock_ahb0;
+
+
+    tlm::tlm_initiator_socket<32, data, 0> master_sock_ahb1;
+ tlm::tlm_target_socket<32, data, 0> slave_sock0;
+
+
+ tlm::tlm_target_socket<32, data, 0> slave_sock1;
+
+
+
+
+
+ data *outstanding_req;
+ data *outstanding_data;
+ unsigned int outstanding_txn_count;
+ unsigned int data_count;
+ sc_core::sc_event end_data_ev;
+ sc_core::sc_event bus_ungrant_ev;
+ sc_core::sc_event bus_grant_ev;
+ unsigned int current_req_master;
+ unsigned int current_data_master;
+ unsigned short m_BusRequest_Register;
+ unsigned short m_InService_Register;
+
+ data *m_grant_txn;
+    int m_grant_phase;
+    sc_core::sc_time m_grant_time;
+
+    sc_core::sc_time m_bus_req_sample_time, m_req_sample_time;
+    unsigned int m_drop_cycle;
+    unsigned int m_default_size;
+    int m_outstanding_req_type;
+
+ void arbitrate();
+ void bus_ungrant();
+ void bus_grant();
+ void b_transport(data &tran, sc_core::sc_time &t);
+ bool get_direct_mem_ptr(data &tran, tlm::tlm_dmi &dmi_data);
+ unsigned int get_index(sc_dt::uint64 address);
+ void invalidate_direct_mem_ptr(sc_dt::uint64 start_range, sc_dt::uint64 end_range);
+ tlm::tlm_sync_enum nb_transport_bw(data &tran, int &phase, sc_core::sc_time &t);
+ tlm::tlm_sync_enum nb_transport_fw(data &tran, int &phase, sc_core::sc_time &t);
+ void pendingReqProcess();
+ unsigned int transport_dbg(data &tran);
+
+ SC_HAS_PROCESS(ahb_simple_bus);
+
+ ahb_simple_bus(sc_core::sc_module_name nm) : sc_module(nm),
+
+  master_sock_ahb0("ahb_arbiter_master_socket_ahb0"),
+
+
+  master_sock_ahb1("ahb_arbiter_master_socket_ahb1"),
+  slave_sock0("ahb_arbiter_slave_socket0"),
+
+
+  slave_sock1("ahb_arbiter_slave_socket1"),
+
+
+
+
+  outstanding_req(NULL),
+  outstanding_data(NULL),
+  outstanding_txn_count(0),
+     data_count(0),
+  current_req_master(0),
+  current_data_master(0),
+  m_BusRequest_Register(0),
+  m_InService_Register(0),
+     m_drop_cycle(0)
+ {
+  //TODO mp: what is the default value of m_grant_txn? We have to allocate some memory as it is never allocated elsewhere
+  m_grant_txn = new data();
+  //m_grant_txn = slave_sock.get_reset_txn();
+  SC_METHOD(bus_ungrant);
+  sensitive << bus_ungrant_ev;
+  dont_initialize();
+
+  SC_METHOD(bus_grant);
+  sensitive << bus_grant_ev;
+  dont_initialize();
+
+  SC_METHOD(pendingReqProcess);
+  sensitive << end_data_ev;
+  dont_initialize();
+
+
+  master_sock_ahb0.bind(*this);
+
+
+  master_sock_ahb1.bind(*this);
+  slave_sock0.bind(*this);
+
+
+  slave_sock1.bind(*this);
+
+
+
+
+
+     m_default_size = (32 + 7) / 8;
+ }
+
+ ~ahb_simple_bus()
+ {
+ }
+};
+
+
+
+
+
+
+
+
+class ahb_simple_mem : public sc_core::sc_module, tlm::tlm_fw_transport_if<data>
+{
+public:
+ tlm::tlm_target_socket<32, data, 1> slave_socket;
+ sc_core::sc_in_clk clk;
+
+ void b_transport(data &tran, sc_core::sc_time &t );
+ bool get_direct_mem_ptr(data &tran, tlm::tlm_dmi &dmi_data);
+ void invalidate_direct_mem_ptr(int start_range, int end_range);
+ tlm::tlm_sync_enum nb_transport_fw(data &tran, int &phase, sc_core::sc_time &t);
+ void peq_cb(data &tran, const int &phase);
+ void readData(unsigned int *burst_size);
+ void responseProcess();
+ unsigned int transport_dbg(data& tran);
+ void writeData(unsigned int *burst_size);
+
+ unsigned int baseAddr; //base address of the slave
+ unsigned int counter;
+ data *current_trans;
+ unsigned int MEM[3];
+ unsigned int mem_size; //size of the memory
+ bool m_data_pending;
+ tlm_utils::peq_with_cb_and_phase< ahb_simple_mem, data > m_peq;
+ bool m_request_pending;
+ unsigned int txn_address;
+ unsigned int txn_burst_len;
+
+ SC_HAS_PROCESS(ahb_simple_mem);
+
+ ahb_simple_mem(sc_module_name nm, unsigned int addr, unsigned int tsize) : sc_module(nm)
+ ,slave_socket("ahb_simple_slave_socket")
+ ,baseAddr(addr)
+ ,counter(0)
+ ,current_trans(NULL)
+ ,mem_size(tsize)
+ ,m_data_pending(false)
+ ,m_peq("slave peq", this, &ahb_simple_mem::peq_cb)
+ ,m_request_pending(false)
+ ,txn_address(0)
+ ,txn_burst_len(0)
+ {
+  for(unsigned int i = 0; i < mem_size; i++) {
+   MEM[i] = 0;
+  }
+
+  SC_METHOD(responseProcess);
+  sensitive << clk;
+  dont_initialize();
+
+  slave_socket.bind( *this );
+ }
+
+ ~ahb_simple_mem()
+   {
+     //	delete[] MEM;
+ }
+
+ inline unsigned int get_size()
+ {
+  return mem_size;
+ }
+
+ inline unsigned int get_base_addr()
+ {
+  return baseAddr;
+ }
+
+};
+
+
+
+
+
+
+
+
+class tlm2_master_to_ahb : public sc_core::sc_module
+,public tlm::tlm_bw_transport_if<data>
+,public tlm::tlm_fw_transport_if<tlmdata>
+{
+public:
+ tlm::tlm_initiator_socket<32, data, 1> master_socket;
+
+ /* @brief slave socket to connect to tlm2 master. */
+ tlm::tlm_target_socket<32, tlmdata, 1> slave_socket;
+
+ sc_core::sc_in_clk clk;
+
+ void busGranted();
+ void busNotGranted();
+ void b_transport(tlmdata &tran, sc_core::sc_time &t);
+ void clock_tick();
+ void dataProcess();
+ bool get_direct_mem_ptr(tlmdata &trans, tlm::tlm_dmi &dmi_data);
+ void invalidate_direct_mem_ptr(sc_dt::uint64 start_range, sc_dt::uint64 end_range);
+ tlm::tlm_sync_enum nb_transport_bw(data &tran, int &phase, sc_core::sc_time &t);
+ tlm::tlm_sync_enum nb_transport_fw(tlmdata &tran, int &phase, sc_core::sc_time &t);
+ void peq_cb(data &tran, const int &phase);
+ void receiveData(data &tran);
+ void resumeRequest();
+ void requestProcess();
+ void sendData();
+ void startRequest();
+ unsigned int transport_dbg(tlmdata &trans);
+
+ sc_core::sc_event b_transport_finished_ev;
+ sc_dt::uint64 current_Address;
+ unsigned int current_Command;
+ unsigned int current_DataLength;
+ data *current_trans;
+ unsigned int master_id;
+ bool m_bus_granted;
+ bool m_bus_req_pending;
+ unsigned int m_data_count;
+ bool m_data_pending;
+ tlm_utils::peq_with_cb_and_phase< tlm2_master_to_ahb, data > m_peq;
+ bool m_request_pending;
+ bool m_restart_pending_req;
+ unsigned int m_txn_count;
+
+ SC_HAS_PROCESS(tlm2_master_to_ahb);
+
+ tlm2_master_to_ahb(sc_core::sc_module_name nm, unsigned int id) : sc_module(nm)
+ ,master_socket("tlm2_master_to_ahb_socket")
+ ,slave_socket("bus_socket")
+ ,current_DataLength(0)
+ ,current_trans(NULL)
+ ,master_id(id)
+ ,m_bus_granted(false)
+ ,m_bus_req_pending(false)
+ ,m_data_count(0)
+ ,m_data_pending(false)
+ ,m_peq("m_peq", this, &tlm2_master_to_ahb::peq_cb)
+ ,m_request_pending(false)
+ ,m_restart_pending_req(false)
+ ,m_txn_count(0)
+ {
+  SC_METHOD(clock_tick);
+  sensitive << clk;
+  dont_initialize();
+
+  master_socket.bind( *this );
+  slave_socket.bind( *this );
+ }
+
+ ~tlm2_master_to_ahb()
+ {
+ }
+
+
+};
+
+
+
+
+
+
+
+
+class tlm2_simple_master : public sc_core::sc_module, public tlm::tlm_bw_transport_if<tlmdata>
+{
+public:
+ tlm::tlm_initiator_socket<32, tlmdata, 1> init_sock;
+ sc_core::sc_in_clk clk;
+
+ void clock_tick();
+ void invalidate_direct_mem_ptr(sc_dt::uint64 start_range, sc_dt::uint64 end_range);
+ tlm::tlm_sync_enum nb_transport_bw(tlmdata &tran, int &phase, sc_core::sc_time &t);
+ void thread_process();
+
+ sc_core::sc_event pos_clk_edge;
+ tlmdata d;
+
+ SC_HAS_PROCESS(tlm2_simple_master);
+
+ tlm2_simple_master(sc_core::sc_module_name nm) : sc_module(nm), init_sock("simple_master_init_sock")
+ {
+  init_sock.bind(*this);
+
+  SC_METHOD(clock_tick);
+  sensitive << clk;
+  dont_initialize();
+
+  SC_THREAD(thread_process);
+ }
+
+ ~tlm2_simple_master()
+ {
+ }
+};
+
+
+
+void ahb_simple_bus::arbitrate()
+{// Currently Grant is being given to the master with lower index
+// we are not preempting the onging txn in this arbiter even if higher priority master sends req
+ ;;
+ //TODO mp: i had to change this as UPPAAL does not support numbers > 2^16-1 by default. This is now depending on the number of masters which should work fine.
+ //for(unsigned short j = 0; j < 16; j++)
+ for(unsigned short j = 0; j < 2; j++)
+ {
+  unsigned short temp = 1 << j;
+  if(m_BusRequest_Register & temp)
+  {
+   if(m_InService_Register == 0)
+   {
+    m_InService_Register= temp;
+    current_req_master=j;
+    //clear the jth bit in m_BusRequest_Register now
+    //m_BusRequest_Register &= (~temp); clear is done via BUS_REQ_STOP
+    m_BusRequest_Register -= temp;
+   }
+  }
+ }
+ ;;
+}
+
+void ahb_simple_bus::bus_grant()
+{
+ ;;
+ m_grant_time = sc_time(1, SC_NS);
+ m_grant_phase = 61;
+   tlm::tlm_sync_enum retval = tlm::TLM_ACCEPTED;
+    arbitrate();
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Sending the Bus-grant signal to the master[" << current_req_master << "]" << std::endl;
+
+ switch(current_req_master) {
+
+     case 0:
+   retval = slave_sock0->nb_transport_bw(*m_grant_txn, m_grant_phase, m_grant_time);
+   break;
+
+
+     case 1:
+   retval = slave_sock1->nb_transport_bw(*m_grant_txn, m_grant_phase, m_grant_time);
+   break;
+
+
+
+
+
+
+     default:
+   cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "ERROR master " << current_req_master << " does not exist." << endl;
+ }
+
+ ;;
+ //assert(retval == tlm::TLM_ACCEPTED);
+ ;;
+}
+
+void ahb_simple_bus::bus_ungrant()
+{
+ ;;
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Sending the Bus- Ungrant signal to the master[" << current_req_master << "]" << endl;
+ ;;
+ //tlm::tlm_generic_payload trans;
+ //trans.set_command(tlm::TLM_IGNORE_COMMAND);
+
+ m_grant_time = sc_time(1, SC_NS);
+ m_grant_phase = 62;
+ m_InService_Register = 0;
+ tlm::tlm_sync_enum retval= tlm::TLM_ACCEPTED;
+  switch(current_req_master) {
+
+     case 0:
+   retval = slave_sock0->nb_transport_bw(*m_grant_txn, m_grant_phase, m_grant_time);
+   break;
+
+
+     case 1:
+   retval = slave_sock1->nb_transport_bw(*m_grant_txn, m_grant_phase, m_grant_time);
+   break;
+
+
+
+
+
+
+     default:
+   cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "ERROR master " << current_req_master << " does not exist." << endl;
+ }
+
+ //assert(retval == tlm::TLM_ACCEPTED);
+ outstanding_txn_count = 0;
+ if(m_BusRequest_Register != 0) {
+  ;;
+  bus_grant_ev.notify(); //ungrant is already delayed
+ }
+ ;;
+}
+
+//Needed because of the socket interfaces. Should never be invoked.
+void ahb_simple_bus::b_transport(data &tran, sc_time &t)
+{
+ //assert(0 && "not implemented yet.");
+}
+
+bool ahb_simple_bus::get_direct_mem_ptr(data &tran, tlm::tlm_dmi &dmi_data)
+{
+ //assert(0 && "not implemented yet.");
+ return false;
+}
+
+unsigned int ahb_simple_bus::get_index(sc_dt::uint64 address)
+{
+ ;;
+ for(unsigned int i=0; i < 2 +0; i=i+1) {
+       if (address >= i * 3 && address < (i+1) * 3)
+  return i;
+    }
+   //assert(0 && "address is not in this range"); 
+   return 0;
+}
+
+void ahb_simple_bus::invalidate_direct_mem_ptr(sc_dt::uint64 start_range, sc_dt::uint64 end_range)
+{
+ //assert(0 && "not implemented yet.");
+}
+
+
+tlm::tlm_sync_enum ahb_simple_bus::nb_transport_bw(data &tran, int &phase, sc_core::sc_time &t)
+{
+ ;;
+ if (phase == 43 || phase == tlm::BEGIN_RESP|| phase == 44){
+  if (phase == 44 || tran.response_status != tlm::TLM_OK_RESPONSE){ //happens one cycle before HREADY
+      m_drop_cycle=1;
+  } else {
+      outstanding_data = NULL; //outstanding data is only reset here if we have a single cycle resp
+  }
+
+  end_data_ev.notify(m_req_sample_time); //this will get us behind any BEGIN_REQ call
+ }
+ unsigned int *size;
+ size = tran.burst_size;
+ if (*size == 0) {
+  size = &m_default_size;
+ }
+
+ data_count++;
+ if(data_count == (tran.data_length / (*size)))//-1))
+ {
+  data_count = 0;
+ }
+
+ tlm::tlm_sync_enum retval = tlm::TLM_ACCEPTED;
+
+ switch(current_data_master) {
+
+     case 0:
+   retval = slave_sock0->nb_transport_bw(tran, phase, t);
+   break;
+
+
+     case 1:
+   retval = slave_sock1->nb_transport_bw(tran, phase, t);
+   break;
+
+
+
+
+
+
+     default:
+   cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "ERROR master " << current_data_master << " does not exist." << endl;
+ }
+
+ ;;
+ return retval;
+}
+
+tlm::tlm_sync_enum ahb_simple_bus::nb_transport_fw(data &tran, int &phase, sc_core::sc_time &t)
+{
+ ;;
+ unsigned int index = tran.amba_id;
+ int addr = tran.address;
+ int slave_index = get_index(addr);
+ ;;
+ unsigned short temp = 0;
+ tlm::tlm_sync_enum retval = tlm::TLM_ACCEPTED;
+ if (phase == tlm::BEGIN_REQ )
+ {// add the split master id so that the slave can know abt it 
+  tran.amba_id = current_req_master;
+ }
+
+ if (phase == 60)
+ {//check is any other high priority master already going on with transaction
+  temp = 0;
+  temp = 1 << index;
+  ;;
+  m_BusRequest_Register = (m_BusRequest_Register | temp);
+  ;;
+  if(outstanding_txn_count == 0)//so no txn is in progress
+  {
+   ;;
+            bus_grant_ev.notify(m_bus_req_sample_time);
+   ;;
+            return tlm::TLM_ACCEPTED;
+  } else {
+   ;;
+   return tlm::TLM_ACCEPTED;
+  }
+ } else if (phase == 63)
+ {//clear our request
+  temp = 0;
+  temp = 1 << index;
+  //TODO mp: UPPAAL does not support bitwise negation, so we subtract temp from m_BusRequest_Register
+  ;;
+  m_BusRequest_Register -= temp;
+  ;;
+        //temp = ~temp;
+  //m_BusRequest_Register &= temp;
+
+  return tlm::TLM_ACCEPTED;
+
+ } else if (phase == tlm::BEGIN_REQ) {
+  int *type;
+  type = tran.trans_type;
+  if(*type == 50)
+  {//ok this is the first BEGIN_REQ/NON_SEQ, then set the outstanding txn				
+   unsigned int *size;
+   size = tran.burst_size;
+   if (*size == 0) {
+    size = &m_default_size;
+   }
+   outstanding_txn_count = tran.data_length/(*size);
+  }
+
+  if (outstanding_data != NULL)
+  {
+   //the last data-phase is not complete so buffer this request phase
+   outstanding_req = &tran;
+            m_outstanding_req_type = *type; //save type if we do not forward immediately
+   ;;
+   return tlm::TLM_ACCEPTED;
+  } else {//last data-phase is done, so send this request too
+   retval = tlm::TLM_ACCEPTED;
+   switch (slave_index) {
+
+    case 0:
+     retval = master_sock_ahb0->nb_transport_fw(tran, phase, t);
+     break;
+
+
+    case 1:
+     retval = master_sock_ahb1->nb_transport_fw(tran, phase, t);
+     break;
+    default:
+     cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "ERROR unknown slave_index " << slave_index << "!" << endl;
+   }
+   //assert(retval == tlm::TLM_UPDATED && phase == tlm::END_REQ);
+            if (*type == 50 || *type == 51){
+             outstanding_data = &tran;
+             if (data_count == 0)
+             {//this is the first data-phase
+                 current_data_master = current_req_master;
+             }
+            }
+            if (*type == 52){
+             outstanding_txn_count = 0; //burst termination
+             data_count = 0;
+           } else {
+             //ok so Req has completed, so lets decrement the outstanding_txn_count
+             outstanding_txn_count--;
+   }
+   if(outstanding_txn_count == 0)
+   {
+    bus_ungrant_ev.notify(m_bus_req_sample_time);
+   }
+   ;;
+   return retval;
+  }
+
+ } else if(phase == 42)
+ {
+  //if(outstanding_data!=NULL)
+   //assert(outstanding_data == &tran);
+  //just for this simple example: assuming that the slave will always respond with TLM_ACCEPTED for BEGIN_DATA
+  retval = tlm::TLM_ACCEPTED;
+  switch (slave_index) {
+
+   case 0:
+    retval = master_sock_ahb0->nb_transport_fw(*outstanding_data, phase, t);
+    break;
+
+
+   case 1:
+    retval = master_sock_ahb1->nb_transport_fw(*outstanding_data, phase, t);
+    break;
+   default:
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "ERROR unknown slave_index " << slave_index << "!" << endl;
+  }
+
+  ;;
+        if (retval == tlm::TLM_UPDATED) {
+         nb_transport_bw(*outstanding_data, phase, t); //it seems as if we are calling bw from fw, but since there is a PEQ in between that is not the case
+  }
+  ;;
+  return tlm::TLM_ACCEPTED;
+ } else {
+  //assert("phase not considered in this example");
+  ;;
+  return tlm::TLM_ACCEPTED;
+ }
+}
+
+void ahb_simple_bus::pendingReqProcess()
+{
+ ;;
+    if (m_drop_cycle == 1) {
+  //drop the non HREADY cycle
+  m_drop_cycle = 2;
+  //TODO mp: in our first model we state that we neither support next_trigger nor posedge_event and therefore cannot handle this statement. We ignored it.
+  //next_trigger(clk.posedge_event());
+  return;
+ } else if (m_drop_cycle == 2) {
+  //get us to a point where the master has potentially sent the IDLE 
+  m_drop_cycle = 3;
+  //TODO mp: in our first model we state that we do not support next_trigger and therefore cannot handle this statement. We ignored it.
+  //next_trigger(m_req_sample_time);
+  return;
+ } else if (m_drop_cycle == 3) {
+  m_drop_cycle = 0;
+  outstanding_data = NULL;
+ }
+
+ if(outstanding_req != NULL)
+ {
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Sending the outstanding request to the slave,nb_fw, phase: BEGIN_REQ" << endl;
+        int *type_ext;
+  type_ext = outstanding_req->trans_type;
+        *type_ext = m_outstanding_req_type; //restore type
+
+        if (*type_ext == 52)
+  {
+   outstanding_txn_count = 1;
+   data_count = 0;
+  }//so it will drop to zero and terminate the burst
+
+  unsigned int addr = outstanding_req->address;
+  unsigned int index = get_index(addr);
+  outstanding_req->amba_id = current_req_master;
+
+  int ph = tlm::BEGIN_REQ;
+  sc_core::sc_time delay = sc_time(1, SC_NS);
+  tlm::tlm_sync_enum retval = tlm::TLM_ACCEPTED;
+  switch (index) {
+
+   case 0:
+    retval = master_sock_ahb0->nb_transport_fw(*outstanding_req, ph, delay);
+    break;
+
+
+   case 1:
+    retval = master_sock_ahb1->nb_transport_fw(*outstanding_req, ph, delay);
+    break;
+   default:
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "ERROR unknown slave_index " << index << "!" << endl;
+  }
+
+  //assert(retval == tlm::TLM_UPDATED);
+  //send master the END_REQ phase
+  ph = tlm::END_REQ;
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Returning the right returnval to master, nb_bw, ph:END_REQ" << endl;
+  switch (current_req_master) {
+
+      case 0:
+    retval = slave_sock0->nb_transport_bw(*outstanding_req, ph, delay);
+    break;
+
+
+      case 1:
+    retval = slave_sock1->nb_transport_bw(*outstanding_req, ph, delay);
+    break;
+
+
+
+
+
+
+   default:
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "ERROR master " << current_req_master << " does not exist." << endl;
+  }
+  //assert(retval == tlm::TLM_ACCEPTED);
+
+  outstanding_txn_count--;
+  if(outstanding_txn_count == 0)
+  {
+   bus_ungrant_ev.notify(m_bus_req_sample_time);
+  }
+  outstanding_data = outstanding_req ;
+  current_data_master = current_req_master;
+  outstanding_req = NULL;
+ }
+ ;;
+}
+
+unsigned int ahb_simple_bus::transport_dbg(data& tran)
+{
+ //assert(0 && "not implemented yet.");
+ return 0;
+}
+
+
+
+void ahb_simple_mem::b_transport(data &tran, sc_core::sc_time &t )
+{
+        //assert(0 && "not implemented yet.");
+}
+
+bool ahb_simple_mem::get_direct_mem_ptr(data &tran, tlm::tlm_dmi &dmi_data)
+{
+        //assert(0 && "not implemented yet.");
+        return false;
+}
+
+void ahb_simple_mem::invalidate_direct_mem_ptr(int start_range, int end_range)
+{
+        //assert(0 && "not implemented yet.");
+}
+
+//TODO mp: it seems as if the amba sockets in the original model have a built-in delay. We can emulate this by using a payload event queue. The whole content of the original nb_transport_fw is moved into the peq_cb and we simply return TLM_ACCEPTED after enqueueing the trans and phase into the peq.
+tlm::tlm_sync_enum ahb_simple_mem::nb_transport_fw(data &tran, int &phase, sc_core::sc_time &t)
+{
+ ;;
+ //TODO mp: had to add these clauses as something is very strange here: in the original model the ahb_simple_mem::peq_cb method (or better the original nb_transport_fw) is called 1 ps AFTER the execution of ahb_simple_bus::nb_transport_fw. Nevertheless the assertion that phase == END_REQ is fulfilled instantly. Therefore we change the phase to END_REQ if it was BEGIN_REQ and return the correct return value depending on the phase here.
+ m_peq.notify(tran, phase, t);
+ if (phase == tlm::BEGIN_REQ) {
+  phase = tlm::END_REQ;
+  return tlm::TLM_UPDATED;
+ } else {
+  return tlm::TLM_ACCEPTED;
+ }
+}
+
+//TODO mp: it seems as if the amba sockets in the original model have a built-in delay. We can emulate this by using a payload event queue. This callback method contains the whole content of nb_transport_fw in the original model.
+void ahb_simple_mem::peq_cb(data &tran, const int &phase)
+{
+ ;;
+ ;;
+ int *type;
+ unsigned int *size;
+ if(phase == tlm::BEGIN_REQ)
+ {
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_fw, ph:BEGIN_REQ" << endl;
+  current_trans = &tran;
+  type = current_trans->trans_type;
+  size = current_trans->burst_size;
+
+  if(*type == 50)
+  {//save this address and the burst-length
+   txn_address = current_trans->address;
+   txn_burst_len = current_trans->data_length / (*size);
+   counter = 0;
+  }
+  if(current_trans->command == tlm::TLM_READ_COMMAND) {
+   m_data_pending = true; //we have to send the data to the master
+  }
+
+ } else if (phase == 42) {
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_fw, ph:BEGIN_DATA" << endl;
+  m_data_pending = true; //we have to copy the data in the memory.
+ }
+
+ ;;
+ ;;
+}
+
+void ahb_simple_mem::readData(unsigned int *burst_size)
+{
+ ;;
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Read transaction received";
+
+ unsigned int *data_ptr = current_trans->data_ptr;
+
+ int t1;
+ t1 = (txn_address - baseAddr) + (*burst_size - 1);
+ t1 = t1 % 3;
+ *data_ptr = MEM[t1];
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "READ: MEM[" << t1 <<"] = " << MEM[t1] << endl;
+
+ current_trans->data_ptr = data_ptr;
+
+ int ph = tlm::BEGIN_RESP;
+ sc_core::sc_time delay = sc_time(0, SC_NS);
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Sending nb_bw, BEGIN_RESP";
+    current_trans->response_status = tlm::TLM_OK_RESPONSE;
+
+ tlm::tlm_sync_enum retval = slave_socket->nb_transport_bw(*current_trans, ph, delay);
+ //assert((retval == tlm::TLM_ACCEPTED) && (ph == tlm::BEGIN_RESP));
+
+ m_data_pending = false;
+ counter++;
+
+ ;;
+}
+
+void ahb_simple_mem::responseProcess()
+{
+
+ ;;
+ if(current_trans != NULL)
+ {
+  unsigned int cmd = current_trans->command;
+  unsigned int *burst_size = current_trans->burst_size;
+
+  if(cmd == tlm::TLM_WRITE_COMMAND)
+  {
+   if (m_data_pending == true)
+   {
+    if(txn_burst_len != counter)
+    {
+     writeData(burst_size);
+     txn_address += *burst_size;
+    }
+    else if (txn_burst_len == counter)
+     counter = 0;
+   }
+  }
+  else if (cmd == tlm::TLM_READ_COMMAND)
+  {
+   if (m_data_pending == true)
+   {
+    if(txn_burst_len != counter)
+    {
+     readData(burst_size);
+     txn_address += *burst_size;
+    }
+    else if (txn_burst_len == counter)
+     counter=0;
+   }
+  }
+  else
+  {
+   //assert(0 && "UNKNOWN COMMAND!");
+  }
+ }
+ ;;
+}
+
+unsigned int ahb_simple_mem::transport_dbg(data& tran)
+{
+        //assert(0 && "not implemented yet.");
+        return 0;
+}
+
+void ahb_simple_mem::writeData(unsigned int * burst_size)
+{
+ ;;
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Write transaction received" << endl;
+
+ unsigned int *data_ptr = current_trans->data_ptr;
+
+ int t1;
+ t1 = (txn_address - baseAddr) + (*burst_size -1);
+ t1 = t1 % 3;
+ MEM[t1] = data_ptr[t1];
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "WRITE: MEM[" << t1 << "] = " << data_ptr[t1] << endl;
+
+ int ph = 43;
+ sc_core::sc_time delay = sc_time(1, SC_NS);
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Sending nb_bw, ph = END_DATA" << endl;
+
+    current_trans->response_status = tlm::TLM_OK_RESPONSE;
+
+ tlm::tlm_sync_enum retval = slave_socket->nb_transport_bw(*current_trans, ph, delay);
+ //assert((retval == tlm::TLM_ACCEPTED) && (ph == END_DATA) && "invalid phase returned");
+
+ m_data_pending = false;
+ counter++;
+
+ ;;
+}
+
+
+
+
+
+//#include "ahb_to_tlm2_slave.h"
+
+
+//#include "tlm2_simple_slave.h"
+
+
+
+int sc_main(int argc, char* argv[])
+{
+ //TODO mp: in the original model we are sensitive only to the posedge of a clock with 10 SC_NS. This should be the same as being sensitive to all edges of a clock with 20 SC_NS
+ sc_clock clk("clock", 20, SC_NS);
+
+   // generate modules
+
+    cout << "Generating master with index 1 ..." << endl;
+   tlm2_simple_master TLM2_M1("TLM2_master0");
+ cout << "Generating bus connector ..." << endl;
+   tlm2_master_to_ahb AHB_M1("AHB_master0", 1);
+
+
+
+
+   cout << "Generating master with index 2 ..." << endl;
+   tlm2_simple_master TLM2_M2("TLM2_master1");
+   tlm2_master_to_ahb AHB_M2("AHB_master1", 2);
+   ahb_simple_mem AHB_S1("AHB_slave0", 0, 3);
+
+
+  ahb_simple_mem AHB_S2("AHB_slave1", 3, 3);
+    ahb_simple_bus AHB_Bus("AHB_Bus");
+
+
+    // connect clocks
+    TLM2_M1.clk(clk);
+    AHB_M1.clk(clk);
+
+
+    // connect clocks
+    TLM2_M2.clk(clk);
+    AHB_M2.clk(clk);
+    AHB_S1.clk(clk);
+
+
+    AHB_S2.clk(clk);
+    // connect modules
+
+    TLM2_M1.init_sock(AHB_M1.slave_socket);
+    AHB_M1.master_socket(AHB_Bus.slave_sock0);
+
+
+    TLM2_M2.init_sock(AHB_M2.slave_socket);
+    AHB_M2.master_socket(AHB_Bus.slave_sock1);
+
+
+
+
+
+
+
+ AHB_Bus.master_sock_ahb0(AHB_S1.slave_socket);
+
+
+ AHB_Bus.master_sock_ahb1(AHB_S2.slave_socket);
+ cout << "Starting!" << endl;
+ sc_start(100, SC_US);
+
+    return 0;
+}
+
+
+
+void tlm2_master_to_ahb::busGranted()
+{
+ ;;
+ //assert(current_trans != NULL && "Operation on NULL transaction");
+ if(m_txn_count == 0) {
+  startRequest();
+ } else if(m_txn_count < (current_trans->data_length)) {// / (BUSWIDTH / 8))) 
+  resumeRequest();
+ }
+ ;;
+}
+
+void tlm2_master_to_ahb::busNotGranted()
+{
+ ;;
+ sc_core::sc_time delay = sc_time(0, SC_NS);
+ //various ahb signals
+
+ if(m_bus_req_pending == false)
+ {//if the previous rquest has been rejected
+  /*
+		 * set the transaction attributes here
+		 */
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Sending the Bus-Request to the arbiter, phase: BUS_REQ" << endl;
+
+  int ph = 60;
+  tlm::tlm_sync_enum retval = master_socket->nb_transport_fw(*current_trans, ph, delay);
+  switch(retval)
+  {
+   case tlm::TLM_UPDATED:
+   {
+    if(ph == 61)
+    {
+     m_bus_granted = true;
+     m_bus_req_pending = false;
+     cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "phase: BUS_GRANT, tlm_sync_enum:TLM_UPDATED" << endl;
+    }
+    else if(ph == 62)
+    {
+     m_bus_granted = false;
+     cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "phase: BUS_UNGRANT, tlm_sync_enum:TLM_UPDATED" << endl;
+    }
+    break;
+   }
+   case tlm::TLM_ACCEPTED:
+   {
+    //assert(ph == BUS_REQ);
+    m_bus_req_pending = true;
+
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "tlm_sync_enum:TLM_ACCEPTED" << endl;
+
+    break;
+   }
+   default:
+   {
+    //assert("Wrong tlm_sync_enum returned");
+   }
+  }
+ }//else wait for the response of previous request
+ ;;
+}
+
+void tlm2_master_to_ahb::b_transport(tlmdata &tran, sc_core::sc_time &t)
+{
+ ;;
+
+ unsigned int cmd = tran.command;
+ int addr = tran.address;
+ unsigned int *ptr = tran.data_ptr;
+ unsigned int len = tran.data_length;
+ unsigned int wid = tran.streaming_width;
+ int current_trans_type = 51;
+ unsigned int current_burst_size = 1;
+
+ tran.response_status = tlm::TLM_INCOMPLETE_RESPONSE;
+ //	if (addr+len > stg.get_size())
+ //	{
+ //		trans.set_response_status(TLM_ADDRESS_ERROR_RESPONSE);
+ //		return;
+ //	}
+ if (wid < len)
+ {
+  tran.response_status = tlm::TLM_BURST_ERROR_RESPONSE;
+  ;;
+  return;
+ }
+
+ ;;
+
+ switch (cmd) {
+ case tlm::TLM_WRITE_COMMAND:
+  current_Address = addr;
+  current_DataLength = len;
+  current_Command = cmd;
+
+  //TODO mp: here master_socket.get_transaction() was used in the original model instead of new.
+  current_trans = new data();
+  current_trans->address = addr;
+  current_trans->amba_id = master_id - 1; //TODO mp: this is new, as we don't get the index of the socket via nb_transport_fw anymore
+  current_trans->data_length = len;
+  current_trans->streaming_width = wid;
+  current_trans->command = cmd;
+  current_trans->data_ptr = ptr;
+  current_trans->trans_type = &current_trans_type;
+  current_trans->burst_size = &current_burst_size;
+
+  ;;
+  wait(b_transport_finished_ev);
+
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "release_transaction" << endl;
+
+  //release transaction
+  delete current_trans;
+  current_trans = NULL;
+
+  //next request can be started.
+  current_DataLength = 0;
+  m_txn_count = 0;
+
+  //stg.write(ptr, (uint32_t)addr, 8*len);
+  tran.response_status = tlm::TLM_OK_RESPONSE;
+  break;
+
+ case tlm::TLM_READ_COMMAND:
+  current_Address = addr;
+  current_DataLength = len;
+  current_Command = cmd;
+  //stg.read(ptr, (uint32_t)addr, 8*len);
+
+  //TODO mp: here we used master_socket.get_transaction().
+  current_trans = new data();
+  current_trans->address = current_Address;
+  current_trans->amba_id = master_id - 1; //TODO mp: this is new, as we don't get the index of the socket via nb_transport_fw anymore
+  current_trans->data_length = current_DataLength;
+  current_trans->streaming_width = current_DataLength;
+  current_trans->command = current_Command;
+  current_trans->data_ptr = ptr;
+  current_trans->trans_type = &current_trans_type;
+  current_trans->burst_size = &current_burst_size;
+
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Waiting until data is processed." << endl;
+  wait(b_transport_finished_ev);
+
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "release_transaction" << endl;
+
+  //release transaction
+  delete current_trans;
+  current_trans = NULL;
+
+  //next request can be started.
+  current_DataLength = 0;
+  m_txn_count = 0;
+
+  tran.response_status = tlm::TLM_OK_RESPONSE;
+
+  break;
+ default:
+  tran.response_status = tlm::TLM_GENERIC_ERROR_RESPONSE;
+  break;
+ }
+ ;;
+}
+
+void tlm2_master_to_ahb::clock_tick()
+{
+ //dataProcess has to be before requestProcess. see specification.
+ dataProcess();
+ requestProcess();
+}
+
+void tlm2_master_to_ahb::dataProcess()
+{
+ ;;
+ if(m_data_count == current_DataLength) // / (BUSWIDTH / 8)) // all transaction has been done.
+ {
+  ;;
+  return;
+ }
+ if(m_restart_pending_req)//ok we have broken transaction,wait until first Non-Seq txn
+ {
+  ;;
+  return;
+ }
+ if(current_trans != NULL) //new transaction available
+ {
+  if(current_trans->command == tlm::TLM_WRITE_COMMAND)
+  {
+   ;;
+   unsigned int burst_count = current_trans->data_length; ///(BUSWIDTH/8);
+
+   bool first_req_accepted = (m_txn_count == 1 && (m_request_pending == false));
+   bool sec_req_available = (m_txn_count > 1 && m_data_count < burst_count); // safe because END_REQ==END_DATA
+
+   if( sec_req_available || first_req_accepted)
+   {
+    if(!m_data_pending)
+     sendData();
+   }
+  }
+ }
+ ;;
+}
+
+bool tlm2_master_to_ahb::get_direct_mem_ptr(tlmdata &trans, tlm::tlm_dmi & dmi_data)
+{
+ //TODO: create logic
+ //assert(0 && "not implemented yet.");
+ return false;
+}
+
+void tlm2_master_to_ahb::invalidate_direct_mem_ptr(sc_dt::uint64 start_range, sc_dt::uint64 end_range)
+{
+ //TODO: create logic
+ //assert(0 && "not implemented yet.");
+}
+
+//TODO mp: it seems as if the amba sockets in the original model have a built-in delay. We can emulate this by using a payload event queue. The whole content of the original nb_transport_bw is moved into the peq_cb and we simply return TLM_ACCEPTED after enqueueing the trans and phase into the peq.
+tlm::tlm_sync_enum tlm2_master_to_ahb::nb_transport_bw(data &tran, int &phase, sc_core::sc_time &t)
+{
+ ;;
+ m_peq.notify(tran, phase, t);
+ return tlm::TLM_ACCEPTED;
+}
+
+tlm::tlm_sync_enum tlm2_master_to_ahb::nb_transport_fw(tlmdata &tran, int &phase, sc_core::sc_time &t)
+{
+ //TODO: create logic for nb_transport_fw
+ //assert(0 && "not implemented yet.");
+
+ return tlm::TLM_COMPLETED;
+}
+
+//TODO mp: it seems as if the amba sockets in the original model have a built-in delay. We can emulate this by using a payload event queue. This callback method contains the whole content of nb_transport_bw in the original model.
+void tlm2_master_to_ahb::peq_cb(data &tran, const int &phase)
+{
+ ;;
+ ;;
+ unsigned int *size;
+ unsigned int burst_len = 0;
+
+ if (phase == tlm::BEGIN_RESP)
+ {
+  receiveData(tran);
+  ;;
+  return;
+ }
+ else if(phase == tlm::END_REQ)
+ {
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_bw, ph: END_REQ" << endl;
+  m_request_pending = false;
+
+ }
+ else if(phase == 43)
+ {
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_bw, ph: END_DATA" << endl;
+  //This has been returned in case of write transaction
+  size = tran.burst_size;
+  burst_len = tran.data_length / (*size);
+
+  m_data_pending = false;
+
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_bw, m_data_count: " << m_data_count << ", bust_len: " << burst_len << endl;
+  if(m_data_count == burst_len)
+  {
+   b_transport_finished_ev.notify();
+  }
+  else
+  {
+   dataProcess();
+  }
+ }
+ else if (phase == 61)
+ {
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_bw, ph:BUS_GRANT" << endl;
+  m_bus_granted = true;
+  m_bus_req_pending = false;
+
+  requestProcess();
+ }
+ else if (phase == 62)
+ {
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_bw, ph: BUS_UNGRANT" << endl;
+  //bus is ungranted from the master
+  m_bus_granted = false;
+  m_bus_req_pending = false;
+  m_data_pending = false;
+  m_request_pending = false;
+
+  if(m_txn_count < burst_len)
+  {//this ungrant has come in between,so preserve the state of current trans
+   current_trans = &tran;
+   //ok set the flag to remind master to restart this transaction again later
+   m_restart_pending_req = true;
+  }
+ }
+ else
+ {//if ph== DATA_SPLIT/DATA_RETRY/RESET_ASSERT/RESET_DEASSERT
+  //assert("Phase not implemented in example.");
+ }
+ ;;
+ ;;
+}
+
+
+void tlm2_master_to_ahb::receiveData(data &tran)
+{
+ ;;
+ unsigned int *size;
+ unsigned int burst_len = 0;
+ m_data_count++;
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_bw, ph:BEGIN_RESP" << endl;
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Read transaction received, data-burst-count:" << m_data_count << endl;
+
+ size = tran.burst_size;
+ burst_len = tran.data_length / (*size);
+ unsigned int *data_ptr = tran.data_ptr;
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "READ: data is " << (*data_ptr) << ", m_data_count is " << m_data_count << ", burst_len is " << burst_len << endl;
+
+ if(m_data_count == burst_len) {
+  b_transport_finished_ev.notify();
+  m_data_pending = false;
+ } else //by MK.
+  m_data_pending = true;
+
+ ;;
+}
+
+void tlm2_master_to_ahb::resumeRequest()
+{
+ ;;
+ //various ahb signals
+ int *m_trans_type;
+
+ if(!m_request_pending )
+ {
+  m_txn_count++;
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Command: " << ((current_trans->command == tlm::TLM_WRITE_COMMAND) ? "WRITE COMMAND" : "READ COMMAND")
+   << ",transfer:" << m_txn_count << ", Address Phase";
+
+  if(m_restart_pending_req)
+  {//is this the transaction which was broken earlier due to bus_ungrant in middle
+   m_trans_type = current_trans->trans_type;
+   *m_trans_type = 50;
+   m_restart_pending_req = false;
+   cout << ", type: Non_Sequential";
+  }
+  else
+  {
+   m_trans_type = current_trans->trans_type;
+   *m_trans_type = 51;
+   cout << ", type: Sequential";
+  }
+  cout << endl;
+
+  sc_core::sc_time delay = sc_time(1, SC_NS);
+  int ph = tlm::BEGIN_REQ;
+
+  cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_fw, phase: " << (ph == 42 ? "BEGIN_DATA" : (ph == 43 ? "END_DATA" : (ph == 44 ? "DATA_RETRY" : (ph == tlm::BEGIN_REQ ? "BEGIN_REQ" : (ph == tlm::END_REQ ? "tlm::END_REQ" : (ph == tlm::BEGIN_RESP ? "tlm::BEGIN_RESP" : (ph == tlm::END_RESP ? "tlm::END_RESP" : (ph == 60 ? "BUS_REQ" : (ph == 61 ? "BUS_GRANT" : (ph == 62 ? "BUS_UNGRANT" : (ph == 63 ? "BUS_REQ_STOP" : "UNKNOWN"))))))))))) << endl;
+
+  tlm::tlm_sync_enum retval = master_socket->nb_transport_fw(*current_trans, ph, delay);
+  m_request_pending = true;
+  if(current_trans->command == tlm::TLM_READ_COMMAND) {
+   m_data_pending = true;
+  }
+
+  switch(retval)
+  {
+   case tlm::TLM_UPDATED:
+   {
+    //assert(ph == tlm::END_REQ && "Unexpected phase" );
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "retval = TLM_UPDATED, phase: " << (ph == 42 ? "BEGIN_DATA" : (ph == 43 ? "END_DATA" : (ph == 44 ? "DATA_RETRY" : (ph == tlm::BEGIN_REQ ? "BEGIN_REQ" : (ph == tlm::END_REQ ? "tlm::END_REQ" : (ph == tlm::BEGIN_RESP ? "tlm::BEGIN_RESP" : (ph == tlm::END_RESP ? "tlm::END_RESP" : (ph == 60 ? "BUS_REQ" : (ph == 61 ? "BUS_GRANT" : (ph == 62 ? "BUS_UNGRANT" : (ph == 63 ? "BUS_REQ_STOP" : "UNKNOWN"))))))))))) << endl;
+    m_request_pending = false;
+    break;
+   }
+   case tlm::TLM_ACCEPTED:
+   {
+    //assert(ph == tlm::BEGIN_REQ && "Unexpected phase");
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "retval = TLM_ACCEPTED, phase: " << (ph == 42 ? "BEGIN_DATA" : (ph == 43 ? "END_DATA" : (ph == 44 ? "DATA_RETRY" : (ph == tlm::BEGIN_REQ ? "BEGIN_REQ" : (ph == tlm::END_REQ ? "tlm::END_REQ" : (ph == tlm::BEGIN_RESP ? "tlm::BEGIN_RESP" : (ph == tlm::END_RESP ? "tlm::END_RESP" : (ph == 60 ? "BUS_REQ" : (ph == 61 ? "BUS_GRANT" : (ph == 62 ? "BUS_UNGRANT" : (ph == 63 ? "BUS_REQ_STOP" : "UNKNOWN"))))))))))) << endl;
+    break;
+   }
+   default:
+   {
+    //assert("Wrong tlm_sync_enum returned");
+   }
+  }
+ }
+
+ ;;
+}
+
+void tlm2_master_to_ahb::requestProcess()
+{
+ ;;
+ if(m_txn_count == current_DataLength) /// (BUSWIDTH / 8))) // || (m_bus_req_pending==true))
+ {
+  ;;
+  return;//all request phases have been done
+ }
+ if(current_trans == NULL)
+ {
+  //send the bus_request to the arbiter first
+  //TODO mp: here master_socket.get_transaction() was used in the original model instead of new.
+  current_trans = new data();
+  //current_trans = master_socket.get_transaction();	
+ }
+ if(!m_bus_granted)
+ {//if the bus has not been granted
+  busNotGranted();
+ }
+ else //m_bus_granted==true
+ {
+  busGranted();
+ }
+
+ ;;
+}
+
+void tlm2_master_to_ahb::sendData()
+{
+ ;;
+ // do we have previous data ack to recieve
+ m_data_count++;
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Write Command, data transfer: " << m_data_count << endl;
+
+ unsigned int *size;
+ size = current_trans->burst_size;
+
+ unsigned int burst_len;
+ //unsigned int *data_ptr;
+
+ if(*size != 0)
+ {
+  burst_len = current_trans->data_length / *size;
+  //data_ptr = current_trans->data_ptr;
+ }
+ else
+ {
+  burst_len= 1;
+  //data_ptr = current_trans->data_ptr;
+ }
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_fw, phase:BEGIN_DATA" << endl;
+ sc_core::sc_time delay = sc_time(1, SC_NS);
+ int ph = 42;
+
+ tlm::tlm_sync_enum retval = master_socket->nb_transport_fw(*current_trans, ph, delay);
+ m_data_pending = true;
+ switch(retval)
+ {
+  case tlm::TLM_UPDATED:
+  {
+   //assert(ph == END_DATA);
+   cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "returnval = TLM_UPDATED, phase: END_DATA" << endl;
+   if(m_data_count == burst_len)
+   {
+    b_transport_finished_ev.notify();
+   }
+   m_data_pending = false;
+
+   break;
+  }
+  case tlm::TLM_ACCEPTED:
+  {
+   //assert(ph == BEGIN_DATA);
+   cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "returnval=TLM_ACCEPTED" << endl;
+   break;
+  }
+  default:
+  {
+   //assert("Wrong tlm_sync_enum returned");
+  }
+ }
+ ;;
+}
+
+void tlm2_master_to_ahb::startRequest()
+{//bus has just granted the control, so start the request
+ ;;
+
+ sc_core::sc_time delay = sc_time(1, SC_NS);
+ //various ahb signals
+ int *m_trans_type;
+ unsigned int *m_burst_size;
+
+ //first transfer is always non-sequential type
+ m_trans_type = current_trans->trans_type;
+ *m_trans_type = 50;
+
+ //set the burstsize
+ m_burst_size = current_trans->burst_size;
+ *m_burst_size = 1;
+
+ int ph = tlm::BEGIN_REQ;
+ m_txn_count++;
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Starting the AHB transaction" << ", TYPE=" << ((current_trans->command == tlm::TLM_WRITE_COMMAND)? "WRITE COMMAND":"READ COMMAND")
+  << ", BURSTSIZE="<< *m_burst_size << ", BURST-LENGTH=" << (current_trans->data_length / *m_burst_size) << ", Request phase"<< m_txn_count << ", type=Non-sequential" << endl;
+
+ cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "nb_fw, phase:BEGIN_REQ" << endl;
+ m_data_count=0; // now start data phase
+
+ tlm::tlm_sync_enum retval = master_socket->nb_transport_fw(*current_trans, ph, delay);
+ switch(retval)
+ {
+  case tlm::TLM_UPDATED:
+  {
+   //assert(ph == tlm::END_REQ && "Unexpected phase" );
+   cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "phase: END_REQ, retval=TLM_UPDATED" << endl;
+   m_request_pending = false;
+   break;
+  }
+  case tlm::TLM_ACCEPTED:
+  {
+   //assert(ph== tlm::BEGIN_REQ && "Unexpected phase");
+   cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "retval=TLM_ACCEPTED" << endl;
+   m_request_pending = true;
+
+   // m_data_count=0; // now start data phase BUGFIX: this must happen in any case and before nb_transport_fw, otherwise we get a deadlock
+   break;
+  }
+  default:
+  {
+   //assert("Wrong tlm_sync_enum returned");
+  }
+ }
+ ;;
+}
+
+// TLM-2.0 interface method for tlm2 target socket
+unsigned int tlm2_master_to_ahb::transport_dbg(tlmdata& trans)
+{
+ //TODO: create logic
+ //assert(0 && "not implemented yet.");
+ return 0;
+}
+
+
+
+
+void tlm2_simple_master::clock_tick()
+{
+ pos_clk_edge.notify();
+}
+
+void tlm2_simple_master::thread_process()
+{
+ sc_time zero_delay = sc_time(0, SC_NS);
+ sc_time delay;
+ uint64 adr;
+ unsigned int cmd = tlm::TLM_IGNORE_COMMAND;
+ unsigned short burst_len;
+ unsigned short number_of_slaves = 2 +0;
+ unsigned int slave_addr_range = 3;
+ unsigned int dataArr[3];
+
+ while(true)
+ {
+  for (unsigned int i = 0; i < slave_addr_range * number_of_slaves; i = i + 3)
+  {
+   for (int l = 0; l < 2; l++)
+   {
+
+    burst_len = 3;
+    unsigned int *dptr = &dataArr[0];
+
+    // generate random address. address range must fit to slaves.
+    //adr = rand() % (number_of_slaves*slave_addr_range);
+
+    adr = i % (number_of_slaves * slave_addr_range);
+
+    // addr_max higher than addr_range.
+    if (adr > ((number_of_slaves * slave_addr_range) - (burst_len))) {
+     adr = (number_of_slaves * slave_addr_range) - (burst_len); //adr=max
+    }
+
+    // Timing annotation models processing time
+    // of initiator prior to call
+    delay = sc_time(1, SC_NS);
+    //delay = sc_time(rand_ps(), SC_PS);
+
+    // generate random command.
+    //tlm::tlm_command cmd = static_cast<tlm::tlm_command>(rand() % 2);
+    if (l == 0) {
+     cmd = tlm::TLM_WRITE_COMMAND;
+    } else if (l == 1) {
+     cmd = tlm::TLM_READ_COMMAND;
+    }
+
+    d.data_ptr = dptr;
+    d.address = adr;
+    d.data_length = burst_len; //TODO: values 1,2,3,8 possible?
+    d.streaming_width = burst_len;
+    d.response_status = tlm::TLM_INCOMPLETE_RESPONSE;
+
+    switch (cmd) {
+    case (tlm::TLM_WRITE_COMMAND):
+     d.command = tlm::TLM_WRITE_COMMAND;
+     //generate random data
+     for (int j = 0; j < burst_len; j++) {
+       dataArr[j] = 1; //j+1;
+     }
+     //data[rand() & 16] = adr;
+
+     cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "WRITE :: ADDR=" << d.address;
+     for (int k = 0; k < burst_len; k++) {
+      cout << ", DATA[" << k << "]=" << dataArr[k];
+     }
+     cout << endl;
+     break;
+
+    case (tlm::TLM_READ_COMMAND):
+     d.command = tlm::TLM_READ_COMMAND;
+     break;
+
+    default:
+     d.command = tlm::TLM_IGNORE_COMMAND;
+     break;
+    }
+
+    ;;
+    init_sock->b_transport(d, delay);
+    ;;
+
+    if (cmd == tlm::TLM_READ_COMMAND) {
+     cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "READ :: ADDR="<< d.address;
+
+     for (int m = 0; m < burst_len; m++) {
+      cout << ", DATA[" << m << "]=" << dataArr[m];
+     }
+
+     cout << endl;
+    }
+
+    if (d.response_status == tlm::TLM_OK_RESPONSE)
+    {
+     cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << "Transaction successfully finished!" << endl;
+    }
+
+    int wait_clks = 20;
+
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << " wait " << wait_clks << " clk's until next transport..." << endl;
+    for (int n = 0; n < wait_clks; n++)
+    {
+     wait(pos_clk_edge);
+    }
+
+    cout << sc_time_stamp() << " /" << (unsigned) sc_core::sc_delta_count() << " " << name() << ": " << " wait " << wait_clks << " ...next transport will be started!" << endl;
+   }
+  }
+ }
+
+ sc_core::sc_stop();
+}
+
+tlm::tlm_sync_enum tlm2_simple_master::nb_transport_bw(tlmdata &tran, int &phase, sc_time &t)
+{
+ return tlm::TLM_COMPLETED;
+}
+
+void tlm2_simple_master::invalidate_direct_mem_ptr(sc_dt::uint64 start_range, sc_dt::uint64 end_range){}

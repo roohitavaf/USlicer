@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>
+const int BEGIN_REQ := 1;
+const int END_REQ := 2;
+const int BEGIN_RESP := 3;
+const int END_RESP := 4;
+const int TLM_OK_RESPONSE := 1;
+const int TLM_BURST_ERROR_RESPONSE := 2;
+const int TLM_GENERIC_ERROR_RESPONSE := 3;
+clock global;
+typedef struct {
+	int dummy;
+} myfifo_if;
+myfifo_if myfifo_if_empty = {0};
+broadcast chan dummybchannel;
+chan dummychannel;
+int dummyinteger;
+broadcast chan cons_inst_thread0_sensitivechan;
+broadcast chan cons_inst_thread0_timeoutevent_wait;
+chan cons_inst_thread0_timeoutevent_notify;
+chan cons_inst_thread0_timeoutevent_notify_imm;
+int cons_inst_thread0_timeoutevent_notify_t;
+chan cons_inst_thread0_fifo_read_ctrl;
+int cons_inst_thread0_fifo_read_return;
+chan cons_inst_thread0_consume_ctrl;
+int cons_inst_thread0_consume_param_c_param;
+chan cons_inst_thread0_main_method_ctrl;
+int fifo_inst_buffer[3];
+int fifo_inst_n := 0;
+int fifo_inst_r_pos := 0;
+int fifo_inst_w_pos := 0;
+broadcast chan fifo_inst_w_event_wait;
+chan fifo_inst_w_event_notify;
+chan fifo_inst_w_event_notify_imm;
+int fifo_inst_w_event_notify_t;
+broadcast chan fifo_inst_r_event_wait;
+chan fifo_inst_r_event_notify;
+chan fifo_inst_r_event_notify_imm;
+int fifo_inst_r_event_notify_t;
+int prod_inst_pid := 127;
+broadcast chan prod_inst_thread0_sensitivechan;
+broadcast chan prod_inst_thread0_timeoutevent_wait;
+chan prod_inst_thread0_timeoutevent_notify;
+chan prod_inst_thread0_timeoutevent_notify_imm;
+int prod_inst_thread0_timeoutevent_notify_t;
+chan prod_inst_thread0_fifo_write_ctrl;
+int prod_inst_thread0_fifo_write_param_c;
+chan prod_inst_thread0_produce_ctrl;
+int prod_inst_thread0_produce_param_c_param;
+int prod_inst_thread0_produce_return;
+chan prod_inst_thread0_main_method_ctrl;
+broadcast chan clk_edge_wait;
+chan clk_edge_notify;
+chan clk_edge_notify_imm;
+int clk_edge_notify_t;
+int clk_period := 50;
+broadcast chan clk_thread0_sensitivechan;
+broadcast chan clk_thread0_timeoutevent_wait;
+chan clk_thread0_timeoutevent_notify;
+chan clk_thread0_timeoutevent_notify_imm;
+int clk_thread0_timeoutevent_notify_t;
+chan clk_thread0_run_ctrl;
+chan activate;
+chan deactivate;
+chan updatestart;
+chan updateend;
+broadcast chan initdone;
+broadcast chan deltadelay;
+broadcast chan advancetime;
+int deltacount := 0;
+int readyprocs := 3;
+int updaterequests := 0;
+</declaration>
+	<template>
+		<name>myfifo_read</name>
+		<parameter>int &amp;buffer[3], int &amp;n, int &amp;r_pos, broadcast chan &amp;w_event_wait, chan &amp;r_event_notify, chan &amp;r_event_notify_imm, chan &amp;read_ctrl, int &amp;read_return</parameter>
+		<declaration>int c;
+</declaration>
+		<location id="id0" x="40" y="80">
+			<name x="30" y="46">fifo_r1</name>
+		</location>
+		<location id="id1" x="40" y="160">
+			<name x="30" y="126">fifo_r2</name>
+			<urgent/>
+		</location>
+		<location id="id2" x="224" y="256">
+			<name x="214" y="222">fifo_r7</name>
+		</location>
+		<location id="id3" x="40" y="368">
+			<name x="30" y="334">fifo_r3</name>
+			<urgent/>
+		</location>
+		<location id="id4" x="40" y="480">
+			<name x="30" y="446">fifo_r4</name>
+			<urgent/>
+		</location>
+		<location id="id5" x="40" y="536">
+			<name x="30" y="502">fifo_r5</name>
+			<urgent/>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="48" y="88">read_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="80" y="128">(n) == (0)</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-48" y="176">!((n) == (0))</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="232" y="264">w_event_wait?</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="assignment" x="48" y="392">n = (n) - (1),
+ r_pos = ((r_pos) + (1)) % (3)</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="56" y="480">r_event_notify_imm!</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-152" y="280">read_ctrl!</label>
+			<nail x="-160" y="536"/>
+			<nail x="-160" y="80"/>
+		</transition>
+	</template>
+	<template>
+		<name>myfifo_write</name>
+		<parameter>int &amp;buffer[3], int &amp;n, int &amp;w_pos, chan &amp;w_event_notify, chan &amp;w_event_notify_imm, broadcast chan &amp;r_event_wait, chan &amp;write_ctrl, int &amp;write_param_c</parameter>
+		<declaration>int c;
+</declaration>
+		<location id="id6" x="48" y="0">
+			<name x="38" y="-34">fifow1</name>
+		</location>
+		<location id="id7" x="48" y="80">
+			<name x="38" y="46">fifow2</name>
+			<urgent/>
+		</location>
+		<location id="id8" x="304" y="200">
+			<name x="294" y="166">fifow7</name>
+		</location>
+		<location id="id9" x="48" y="272">
+			<name x="38" y="238">fifow3</name>
+			<urgent/>
+		</location>
+		<location id="id10" x="48" y="400">
+			<name x="38" y="366">fifow4</name>
+			<urgent/>
+		</location>
+		<location id="id11" x="48" y="488">
+			<name x="38" y="454">fifow5</name>
+			<urgent/>
+		</location>
+		<init ref="id6"/>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="56" y="8">write_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="136" y="48">(n) == (3)</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id9"/>
+			<label kind="guard" x="-40" y="96">!((n) == (3))</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="312" y="200">r_event_wait?</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="assignment" x="56" y="304">n = (n) + (1),
+w_pos = ((w_pos) + (1)) % (3)</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="51" y="416">w_event_notify_imm!</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="-104" y="296">write_ctrl!</label>
+			<nail x="-120" y="488"/>
+			<nail x="-120" y="0"/>
+		</transition>
+	</template>
+	<system>
+//clk_edge = SCEventTemplate(clk_edge_wait, clk_edge_notify, clk_edge_notify_imm, clk_edge_notify_t);
+//clk_thread0_sc_clock_run = sc_clock_run(clk_thread0_timeoutevent_wait, clk_thread0_timeoutevent_notify, clk_thread0_timeoutevent_notify_t, clk_edge_notify, clk_edge_notify_t, clk_period, clk_thread0_run_ctrl);
+//clk_thread0_sensitive = sc_clock_thread0_sensitiveTemp(clk_thread0_sensitivechan);
+//clk_thread0_starter = ThreadStarterTemplate(clk_thread0_run_ctrl);
+//clk_thread0_timeoutevent = SCEventTemplate1(clk_thread0_timeoutevent_wait, clk_thread0_timeoutevent_notify, clk_thread0_timeoutevent_notify_imm, clk_thread0_timeoutevent_notify_t);
+//cons_inst_thread0_consumer_consume = consumer_consume(cons_inst_thread0_timeoutevent_wait, cons_inst_thread0_timeoutevent_notify, cons_inst_thread0_timeoutevent_notify_t, cons_inst_thread0_consume_ctrl, cons_inst_thread0_consume_param_c_param);
+//cons_inst_thread0_consumer_main_method = consumer_main_method(cons_inst_thread0_sensitivechan, cons_inst_thread0_fifo_read_ctrl, cons_inst_thread0_fifo_read_return, cons_inst_thread0_consume_ctrl, cons_inst_thread0_consume_param_c_param, cons_inst_thread0_main_method_ctrl);
+cons_inst_thread0_fifo_myfifo_read = myfifo_read(fifo_inst_buffer, fifo_inst_n, fifo_inst_r_pos, fifo_inst_w_event_wait, fifo_inst_r_event_notify, fifo_inst_r_event_notify_imm, cons_inst_thread0_fifo_read_ctrl, cons_inst_thread0_fifo_read_return);
+//cons_inst_thread0_sensitive = consumer_thread0_sensitiveTemp(cons_inst_thread0_sensitivechan, clk_edge_wait);
+//cons_inst_thread0_starter = ThreadStarterTemplate1(cons_inst_thread0_main_method_ctrl);
+//cons_inst_thread0_timeoutevent = SCEventTemplate2(cons_inst_thread0_timeoutevent_wait, cons_inst_thread0_timeoutevent_notify, cons_inst_thread0_timeoutevent_notify_imm, cons_inst_thread0_timeoutevent_notify_t);
+//fifo_inst_r_event = SCEventTemplate3(fifo_inst_r_event_wait, fifo_inst_r_event_notify, fifo_inst_r_event_notify_imm, fifo_inst_r_event_notify_t);
+//fifo_inst_w_event = SCEventTemplate4(fifo_inst_w_event_wait, fifo_inst_w_event_notify, fifo_inst_w_event_notify_imm, fifo_inst_w_event_notify_t);
+//initialization = InitializerTemplate();
+prod_inst_thread0_fifo_myfifo_write = myfifo_write(fifo_inst_buffer, fifo_inst_n, fifo_inst_w_pos, fifo_inst_w_event_notify, fifo_inst_w_event_notify_imm, fifo_inst_r_event_wait, prod_inst_thread0_fifo_write_ctrl, prod_inst_thread0_fifo_write_param_c);
+//prod_inst_thread0_producer_main_method = producer_main_method(prod_inst_thread0_sensitivechan, prod_inst_thread0_fifo_write_ctrl, prod_inst_thread0_fifo_write_param_c, prod_inst_thread0_produce_ctrl, prod_inst_thread0_produce_param_c_param, prod_inst_thread0_produce_return, prod_inst_thread0_main_method_ctrl);
+//prod_inst_thread0_producer_produce = producer_produce(prod_inst_thread0_timeoutevent_wait, prod_inst_thread0_timeoutevent_notify, prod_inst_thread0_timeoutevent_notify_t, prod_inst_thread0_produce_ctrl, prod_inst_thread0_produce_param_c_param, prod_inst_thread0_produce_return);
+//prod_inst_thread0_sensitive = producer_thread0_sensitiveTemp(prod_inst_thread0_sensitivechan, clk_edge_wait);
+//prod_inst_thread0_starter = ThreadStarterTemplate2(prod_inst_thread0_main_method_ctrl);
+//prod_inst_thread0_timeoutevent = SCEventTemplate5(prod_inst_thread0_timeoutevent_wait, prod_inst_thread0_timeoutevent_notify, prod_inst_thread0_timeoutevent_notify_imm, prod_inst_thread0_timeoutevent_notify_t);
+//scheduler = SchedulerTemplate();
+
+
+system 
+//clk_edge,
+//clk_thread0_sc_clock_run,
+//clk_thread0_sensitive,
+//clk_thread0_starter,
+//clk_thread0_timeoutevent,
+//cons_inst_thread0_consumer_consume,
+//cons_inst_thread0_consumer_main_method,
+cons_inst_thread0_fifo_myfifo_read,
+//cons_inst_thread0_sensitive,
+//cons_inst_thread0_starter,
+//cons_inst_thread0_timeoutevent,
+//fifo_inst_r_event,
+//fifo_inst_w_event,
+//initialization,
+prod_inst_thread0_fifo_myfifo_write;
+//prod_inst_thread0_producer_main_method,
+//prod_inst_thread0_producer_produce,
+//prod_inst_thread0_sensitive,
+//prod_inst_thread0_starter,
+//prod_inst_thread0_timeoutevent,
+//scheduler;</system>
+	<queries>
+		<query>
+			<formula>A[] scheduler.update imply readyprocs==0
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>cons_inst_thread0_consumer_consume.mon_start1 --&gt; cons_inst_thread0_consumer_consume.mon_end1
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt;  cons_inst_thread0_consumer_consume.mon_end1
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>scheduler.evaluate --&gt; scheduler.execute
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>scheduler.evaluate --&gt; clk_edge.notify_requested
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] (scheduler.evaluate imply (not scheduler.execute))
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] (prod_inst_thread0_fifo_myfifo_write.fifow4 &amp;&amp;  cons_inst_thread0_fifo_myfifo_read.fifo_r4) imply   fifo_inst_r_pos ==  fifo_inst_w_pos
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] (prod_inst_thread0_fifo_myfifo_write.fifow4 &amp;&amp;  cons_inst_thread0_fifo_myfifo_read.fifor4) imply  fifo_inst_buffer[ fifo_inst_r_pos] == fifo_inst_buffer[ fifo_inst_r_pos]
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>(prod_inst_thread0_fifo_myfifo_write.fifow4 &amp;&amp;   fifo_inst_buffer[ fifo_inst_w_pos]&gt;0) --&gt; (cons_inst_thread0_fifo_myfifo_read.fifor4 &amp;&amp; fifo_inst_buffer[ fifo_inst_r_pos]&gt;0)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>

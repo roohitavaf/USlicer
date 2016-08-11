@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+typedef int tlm_cmd;
+
+const tlm_cmd writeCmd = 0;
+const tlm_cmd readCmd = 1;
+const tlm_cmd otherCmd = 2;
+const int resetValue = 0;
+const int inComplete = 0;
+const int responseOK = 1;
+const int responseError = 2;
+const int INVALID = -1;
+
+int delay1 = 15;
+int delay2 = 15;
+int GlbClk = 0;
+int MemSize = 128;
+int MemoryID = 0;
+const int N = 2;         // # trains
+typedef int[0,N-1] id_t;
+
+
+chan sendSocket, targetSocket, Init2Router2, AdrDecode, Router2Mem[2], Init2Router1;
+
+typedef struct
+{
+    tlm_cmd cmd;
+    int address;
+    int data;
+    int data_length;
+    int streaming_width;
+    int byte_enable_ptr;
+    bool dmi_allowed;
+    int response_status;
+}package;
+
+void setTrans(package &amp;localtrans, tlm_cmd cmd, 
+    int address, int dp, int dl, int sw, int bep, bool da, int rs)
+{
+    localtrans.cmd = cmd;
+    localtrans.address = address;
+    localtrans.data = dp;
+    localtrans.data_length = dl;
+    localtrans.streaming_width = sw;
+    localtrans.byte_enable_ptr = bep;
+    localtrans.dmi_allowed = da;
+    localtrans.response_status = rs;
+
+//data =5, setTrans(current,writeCmd, 0, data,4,4,0,false,inComplete)
+//data =-1, setTrans(current,readCmd,0, data,4,4,0,false, inComplete)
+//current.cmd = writeCmd, current.address = 0, current.data = 5, current.data_length = 4, current.streaming_width = 4, current.byte_enable_ptr = 0, current.dmi_allowed = false, current.response_status = inComplete;
+//current.cmd = readCmd, current.address = 0, current.data = -1, current.data_length = 4, current.streaming_width = 4, current.byte_enable_ptr = 0, current.dmi_allowed = false, current.response_status = inComplete;
+//current2.cmd = writeCmd, current2.address = 0, current2.data = 5, current2.data_length = 4, current2.streaming_width = 4, current2.byte_enable_ptr = 0, current2.dmi_allowed = false, current2.response_status = inComplete;
+//current2.cmd = readCmd, current2.address = 0, current2.data = -1, current2.data_length = 4, current2.streaming_width = 4, current2.byte_enable_ptr = 0, current2.dmi_allowed = false, current2.response_status = inComplete;
+
+
+}
+void doneProcessing(package &amp;p){
+    p.response_status =responseOK;
+}
+package shared;
+package current;
+package current2;
+//package Transaction;
+clock x;
+//clock y;
+
+
+void reset(package &amp;localtrans){
+    localtrans.cmd = otherCmd;
+    localtrans.address = localtrans.data = localtrans.data_length = localtrans.streaming_width
+    = localtrans.byte_enable_ptr = localtrans.response_status = resetValue;
+    localtrans.dmi_allowed = false;    
+}
+
+ void reset2write(package &amp;localtrans){
+    localtrans.cmd = writeCmd;
+    localtrans.address = localtrans.data = localtrans.data_length = localtrans.streaming_width
+    = localtrans.byte_enable_ptr = localtrans.response_status = resetValue;
+    localtrans.dmi_allowed = false;    
+}
+</declaration>
+	<template>
+		<name x="5" y="5">Init</name>
+		<declaration>// Place local declarations here.
+package current;
+//clock x;
+int data;
+int SentData;
+int RcvdData;
+//const id_t id;
+
+void reset2write(package &amp;localtrans){
+    localtrans.cmd = writeCmd;
+    localtrans.address = localtrans.data = localtrans.data_length = localtrans.streaming_width
+    = localtrans.byte_enable_ptr = localtrans.response_status = resetValue;
+    localtrans.dmi_allowed = false;    
+}
+
+
+void reset2read(package &amp;localtrans){
+    localtrans.cmd = readCmd;
+    localtrans.address = localtrans.data = localtrans.data_length = localtrans.streaming_width
+    = localtrans.byte_enable_ptr = localtrans.response_status = resetValue;
+    localtrans.dmi_allowed = false;
+    MemoryID = 0;
+        
+}
+
+
+</declaration>
+		<location id="id0" x="-208" y="-96">
+			<name x="-224" y="-128">error</name>
+		</location>
+		<location id="id1" x="104" y="-144">
+			<name x="80" y="-176">L5</name>
+			<urgent/>
+		</location>
+		<location id="id2" x="104" y="-304">
+			<name x="72" y="-336">L4</name>
+			<urgent/>
+		</location>
+		<location id="id3" x="-104" y="-304">
+			<name x="-112" y="-288">L3</name>
+			<label kind="invariant" x="-136" y="-336">x &lt;=delay1</label>
+		</location>
+		<location id="id4" x="-104" y="-416">
+			<name x="-112" y="-400">L2</name>
+			<label kind="invariant" x="-136" y="-448">x &lt;= delay1</label>
+		</location>
+		<location id="id5" x="-376" y="-304">
+			<name x="-368" y="-336">L1</name>
+			<label kind="invariant" x="-408" y="-328">x&lt;1</label>
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id5"/>
+			<label kind="assignment" x="-344" y="-120">x = 0</label>
+			<nail x="-400" y="-96"/>
+			<nail x="-400" y="-296"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="-168" y="-120">current.response_status == responseError</label>
+			<nail x="104" y="-96"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-280" y="-168">current.response_status == responseOK</label>
+			<label kind="assignment" x="-196" y="-144">x = 0</label>
+			<nail x="-376" y="-144"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-48" y="-264">x&lt;=delay1+delay2</label>
+			<label kind="synchronisation" x="-48" y="-248">Init2Router1?</label>
+			<label kind="assignment" x="-48" y="-232">current = shared, RcvdData = shared.data</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-40" y="-344">x&gt;=delay1</label>
+			<label kind="synchronisation" x="-40" y="-328">Init2Router1!</label>
+			<label kind="assignment" x="-40" y="-304">shared = current</label>
+			<nail x="0" y="-304"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-48" y="-456">x&gt;=delay1</label>
+			<label kind="synchronisation" x="-48" y="-440">Init2Router1!</label>
+			<label kind="assignment" x="-56" y="-416">shared = current, SentData = current.data</label>
+			<nail x="104" y="-416"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id3"/>
+			<label kind="assignment" x="-782" y="-280">current.cmd = readCmd, current.address = 0, current.data = -1, current.data_length = 4, current.streaming_width = 4, current.byte_enable_ptr = 0, current.dmi_allowed = false, current.response_status = inComplete</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id4"/>
+			<label kind="assignment" x="-637" y="-527">current.cmd = writeCmd, current.address = 0, current.data = 5, current.data_length = 4, current.streaming_width = 4, current.byte_enable_ptr = 0, current.dmi_allowed = false, current.response_status = inComplete</label>
+			<nail x="-376" y="-416"/>
+		</transition>
+	</template>
+	<template>
+		<name>Init2</name>
+		<declaration>// Place local declarations here.
+package current2;
+//clock x;
+int data;
+int SentData;
+int RcvdData;
+
+
+void reset2read(package &amp;localtrans){
+    localtrans.cmd = readCmd;
+    localtrans.address = localtrans.data = localtrans.data_length = localtrans.streaming_width
+    = localtrans.byte_enable_ptr = localtrans.response_status = resetValue;
+    localtrans.dmi_allowed = false;
+    MemoryID = 0;
+        
+}
+</declaration>
+		<location id="id6" x="-208" y="-96">
+			<name x="-224" y="-128">error2</name>
+		</location>
+		<location id="id7" x="104" y="-144">
+			<name x="80" y="-176">L10</name>
+			<urgent/>
+		</location>
+		<location id="id8" x="104" y="-304">
+			<name x="72" y="-336">L9</name>
+			<urgent/>
+		</location>
+		<location id="id9" x="-104" y="-304">
+			<name x="-112" y="-288">L8</name>
+			<label kind="invariant" x="-136" y="-336">x &lt;=delay1</label>
+		</location>
+		<location id="id10" x="-104" y="-416">
+			<name x="-112" y="-400">L7</name>
+			<label kind="invariant" x="-136" y="-448">x &lt;= delay1</label>
+		</location>
+		<location id="id11" x="-376" y="-304">
+			<name x="-368" y="-336">L6</name>
+			<label kind="invariant" x="-408" y="-328">x&lt;1</label>
+		</location>
+		<init ref="id11"/>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id11"/>
+			<label kind="assignment" x="-344" y="-120">x = 0</label>
+			<nail x="-400" y="-96"/>
+			<nail x="-400" y="-296"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-168" y="-120">current2.response_status == responseError</label>
+			<nail x="104" y="-96"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-280" y="-168">current2.response_status == responseOK</label>
+			<label kind="assignment" x="-196" y="-144">x = 0</label>
+			<nail x="-376" y="-144"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-48" y="-264">x&lt;=delay1+delay2</label>
+			<label kind="synchronisation" x="-48" y="-248">Init2Router2?</label>
+			<label kind="assignment" x="-48" y="-232">current2 = shared, RcvdData = shared.data</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-40" y="-344">x&gt;=delay1</label>
+			<label kind="synchronisation" x="-40" y="-328">Init2Router2!</label>
+			<label kind="assignment" x="-40" y="-304">shared = current2</label>
+			<nail x="0" y="-304"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-48" y="-456">x&gt;=delay1</label>
+			<label kind="synchronisation" x="-48" y="-440">Init2Router2!</label>
+			<label kind="assignment" x="-42" y="-391">shared = current2, SentData = current2.data</label>
+			<nail x="104" y="-416"/>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id9"/>
+			<label kind="assignment" x="-943" y="-280">current2.cmd = writeCmd, current2.address = 0, current2.data = 5, current2.data_length = 4, current2.streaming_width = 4, current2.byte_enable_ptr = 0, current2.dmi_allowed = false, current2.response_status = inComplete</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id10"/>
+			<label kind="assignment" x="-1071" y="-493">current2.cmd = writeCmd, current2.address = 0, current2.data = 5, current2.data_length = 4, current2.streaming_width = 4, current2.byte_enable_ptr = 0, current2.dmi_allowed = false, current2.response_status = inComplete</label>
+			<nail x="-376" y="-416"/>
+		</transition>
+	</template>
+	<template>
+		<name>Router</name>
+		<location id="id12" x="-16" y="-200">
+		</location>
+		<location id="id13" x="-16" y="-288">
+		</location>
+		<location id="id14" x="-552" y="-80">
+			<name x="-595" y="-68">L14</name>
+		</location>
+		<location id="id15" x="-16" y="-72">
+			<name x="0" y="-80">L13</name>
+		</location>
+		<location id="id16" x="-112" y="-288">
+			<name x="-122" y="-318">L12</name>
+			<urgent/>
+		</location>
+		<location id="id17" x="-552" y="-288">
+			<name x="-562" y="-318">L11</name>
+		</location>
+		<init ref="id17"/>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="-76" y="-259">AdrDecode?</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="-96" y="-320">AdrDecode!</label>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="-688" y="-192">Init2Router2!</label>
+			<nail x="-600" y="-128"/>
+			<nail x="-600" y="-240"/>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-480" y="-376">x&gt;=delay1</label>
+			<label kind="synchronisation" x="-480" y="-360">Init2Router2?</label>
+			<nail x="-520" y="-336"/>
+			<nail x="-176" y="-336"/>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="-576" y="-144">Init2Router1!</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id14"/>
+			<label kind="synchronisation" x="-496" y="-104">Router2Mem[MemoryID]?</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="-192" y="-152">Router2Mem[MemoryID]!</label>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-416" y="-272">x&gt;=delay1</label>
+			<label kind="synchronisation" x="-424" y="-288">Init2Router1?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Decode</name>
+		<location id="id18" x="-264" y="-96">
+		</location>
+		<location id="id19" x="-480" y="-96">
+		</location>
+		<init ref="id19"/>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id18"/>
+			<label kind="guard" x="-192" y="-152">shared.address &gt; MemSize</label>
+			<label kind="assignment" x="-200" y="-136">shared.address = shared.address - MemSize,MemoryID = MemoryID + 1</label>
+			<nail x="-216" y="-136"/>
+			<nail x="-216" y="-88"/>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-472" y="-64">shared.address &lt; MemSize</label>
+			<label kind="synchronisation" x="-416" y="-80">AdrDecode!</label>
+			<nail x="-376" y="-80"/>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id18"/>
+			<label kind="synchronisation" x="-416" y="-144">AdrDecode?</label>
+			<nail x="-384" y="-120"/>
+		</transition>
+	</template>
+	<template>
+		<name>mTarget</name>
+		<declaration>package memTarget;
+//clock y ;
+
+int RcvdData, SentData;
+int cmd, address, data_length, streaming_width, byte_enable_ptr, data;
+int mem[10] = {1,2,3,4,5,6,7,8,9,10};
+bool dmi_allowed;
+const int outOfBound = 10;
+int transient;
+int down;
+void GetInfo(){
+    cmd = shared.cmd;
+    address = shared.address;
+    data_length = shared.data_length;
+    streaming_width = shared.streaming_width;
+    byte_enable_ptr= shared.byte_enable_ptr;
+    dmi_allowed = shared.dmi_allowed;
+   
+  
+}</declaration>
+		<location id="id20" x="-136" y="-352">
+			<name x="-144" y="-384">L18</name>
+			<label kind="invariant" x="-224" y="-336">x&lt;=delay1+delay2</label>
+		</location>
+		<location id="id21" x="-144" y="-600">
+			<name x="-144" y="-584">L17</name>
+			<label kind="invariant" x="-232" y="-640">x&lt;=delay1+delay2</label>
+		</location>
+		<location id="id22" x="-600" y="-616">
+			<name x="-610" y="-646">error3</name>
+			<urgent/>
+		</location>
+		<location id="id23" x="-400" y="-472">
+			<name x="-384" y="-488">L16</name>
+			<label kind="invariant" x="-384" y="-472">x&gt;=delay1</label>
+			<urgent/>
+		</location>
+		<location id="id24" x="-624" y="-472">
+			<name x="-608" y="-464">L15</name>
+		</location>
+		<init ref="id24"/>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="-616" y="-528">targetSocket!</label>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id24"/>
+			<label kind="guard" x="-536" y="-672">x&lt;=delay1+delay2</label>
+			<label kind="synchronisation" x="-536" y="-648">Router2Mem[MemoryID]!</label>
+			<nail x="-144" y="-648"/>
+			<nail x="-624" y="-648"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id24"/>
+			<label kind="guard" x="-584" y="-352">x&lt;=delay1+delay2</label>
+			<label kind="synchronisation" x="-584" y="-336">Router2Mem[MemoryID]!</label>
+			<nail x="-136" y="-312"/>
+			<nail x="-624" y="-312"/>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id21"/>
+			<label kind="guard" x="-392" y="-624">cmd == writeCmd</label>
+			<label kind="assignment" x="-392" y="-600">mem[shared.address] = shared.data, shared.response_status=responseOK, RcvdData=shared.data</label>
+			<nail x="-400" y="-600"/>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-392" y="-352">cmd==readCmd</label>
+			<label kind="assignment" x="-392" y="-408">shared.data = mem[shared.address],shared.response_status =responseOK,SentData=mem[shared.address]</label>
+			<nail x="-400" y="-352"/>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id22"/>
+			<label kind="guard" x="-1088" y="-595">address &gt;=outOfBound|| data_length &gt;4 || streaming_width &lt;4|| byte_enable_ptr !=0|| cmd&gt;1</label>
+			<nail x="-424" y="-616"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id23"/>
+			<label kind="guard" x="-504" y="-472">x&gt;=delay1</label>
+			<label kind="synchronisation" x="-576" y="-496">Router2Mem[MemoryID]?</label>
+			<label kind="assignment" x="-568" y="-472">GetInfo()</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+
+
+// List one or more processes to be composed into a system.
+//system Init, Init2, Router, Decode, mTarget;
+system Init, Init2, Router, Decode, mTarget;</system>
+	<queries>
+		<query>
+			<formula>A[] (((not (mTarget.L15) || not (mTarget.data == INVALID)) || mTarget.cmd == writeCmd) || (not (mTarget.L15) || not (mTarget.data != INVALID)) || mTarget.cmd == readCmd)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] (((not (Init.L5) || not (Init.current.cmd == writeCmd)) || Init.SentData == mTarget.RcvdData) || (not (Init.L5) || not (Init.current.cmd == readCmd)) || Init.RcvdData == mTarget.SentData)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] Init.SentData == mTarget.RcvdData
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>Init.L1 --&gt; (Init.L4 and x&gt;=delay1)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>Init.L1 --&gt; (Init.L2 or Init.L3)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>(Init.L2 or Init.L3) --&gt;  Init.L1
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[]  not deadlock
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>

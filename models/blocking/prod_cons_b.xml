@@ -1,0 +1,1053 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>
+const int BEGIN_REQ := 1;
+const int END_REQ := 2;
+const int BEGIN_RESP := 3;
+const int END_RESP := 4;
+const int TLM_OK_RESPONSE := 1;
+const int TLM_BURST_ERROR_RESPONSE := 2;
+const int TLM_GENERIC_ERROR_RESPONSE := 3;
+clock global;
+typedef struct {
+	int dummy;
+} myfifo_if;
+myfifo_if myfifo_if#empty = {0};
+broadcast chan dummybchannel;
+chan dummychannel;
+int dummyinteger;
+broadcast chan cons_inst#thread0#sensitivechan;
+broadcast chan cons_inst#thread0#timeoutevent#wait;
+chan cons_inst#thread0#timeoutevent#notify;
+chan cons_inst#thread0#timeoutevent#notify_imm;
+int cons_inst#thread0#timeoutevent#notify_t;
+chan cons_inst#thread0#fifo#read#ctrl;
+int cons_inst#thread0#fifo#read#return;
+chan cons_inst#thread0#consume#ctrl;
+int cons_inst#thread0#consume#param#c_param;
+chan cons_inst#thread0#main_method#ctrl;
+int fifo_inst#buffer[3];
+int fifo_inst#n := 0;
+int fifo_inst#r_pos := 0;
+int fifo_inst#w_pos := 0;
+broadcast chan fifo_inst#w_event#wait;
+chan fifo_inst#w_event#notify;
+chan fifo_inst#w_event#notify_imm;
+int fifo_inst#w_event#notify_t;
+broadcast chan fifo_inst#r_event#wait;
+chan fifo_inst#r_event#notify;
+chan fifo_inst#r_event#notify_imm;
+int fifo_inst#r_event#notify_t;
+int prod_inst#pid := 127;
+broadcast chan prod_inst#thread0#sensitivechan;
+broadcast chan prod_inst#thread0#timeoutevent#wait;
+chan prod_inst#thread0#timeoutevent#notify;
+chan prod_inst#thread0#timeoutevent#notify_imm;
+int prod_inst#thread0#timeoutevent#notify_t;
+chan prod_inst#thread0#fifo#write#ctrl;
+int prod_inst#thread0#fifo#write#param#c;
+chan prod_inst#thread0#produce#ctrl;
+int prod_inst#thread0#produce#param#c_param;
+int prod_inst#thread0#produce#return;
+chan prod_inst#thread0#main_method#ctrl;
+broadcast chan clk#edge#wait;
+chan clk#edge#notify;
+chan clk#edge#notify_imm;
+int clk#edge#notify_t;
+int clk#period := 50;
+broadcast chan clk#thread0#sensitivechan;
+broadcast chan clk#thread0#timeoutevent#wait;
+chan clk#thread0#timeoutevent#notify;
+chan clk#thread0#timeoutevent#notify_imm;
+int clk#thread0#timeoutevent#notify_t;
+chan clk#thread0#run#ctrl;
+chan activate;
+chan deactivate;
+chan updatestart;
+chan updateend;
+broadcast chan initdone;
+broadcast chan deltadelay;
+broadcast chan advancetime;
+int deltacount := 0;
+int readyprocs := 3;
+int updaterequests := 0;
+</declaration>
+	<template>
+		<name>InitializerTemplate</name>
+		<location id="id0" x="40" y="80">
+			<urgent/>
+		</location>
+		<location id="id1" x="190" y="80">
+			<committed/>
+		</location>
+		<location id="id2" x="190" y="230">
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="80" y="48">deltadelay?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="192" y="128">initdone!</label>
+		</transition>
+	</template>
+	<template>
+		<name>SCEventTemplate</name>
+		<parameter>broadcast chan &amp;wait, chan &amp;notify, chan &amp;notify_imm, int &amp;notify_t</parameter>
+		<declaration>clock wait_clock;
+int ndelay;
+</declaration>
+		<location id="id3" x="-96" y="0">
+			<name x="-106" y="-30">init_event</name>
+		</location>
+		<location id="id4" x="-96" y="120">
+			<name x="-80" y="104">notify_requested</name>
+			<committed/>
+		</location>
+		<location id="id5" x="-96" y="288">
+			<name x="-208" y="280">wait_for_delta</name>
+			<label kind="invariant" x="-88" y="296">wait_clock &lt;= ndelay</label>
+		</location>
+		<location id="id6" x="344" y="8">
+			<name x="334" y="-22">notify_now</name>
+			<committed/>
+		</location>
+		<location id="id7" x="-96" y="376">
+			<name x="-144" y="384">advancing_time</name>
+			<committed/>
+		</location>
+		<init ref="id3"/>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="-224" y="24">notify?</label>
+			<label kind="assignment" x="-224" y="40">ndelay = notify_t,
+wait_clock = 0</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-240" y="160">wait_clock + notify_t 
+                &lt; ndelay</label>
+			<label kind="assignment" x="-224" y="176">ndelay = notify_t,
+wait_clock = 0</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="-32" y="136">notify?</label>
+			<nail x="-32" y="224"/>
+			<nail x="-32" y="144"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-376" y="96">wait_clock + notify_t &gt;= ndelay</label>
+			<nail x="-312" y="136"/>
+			<nail x="-312" y="240"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="guard" x="96" y="184">ndelay == 0</label>
+			<label kind="synchronisation" x="104" y="168">deltadelay?</label>
+			<nail x="200" y="208"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="guard" x="0" y="256">wait_clock == ndelay &amp;&amp; ndelay!= 0</label>
+			<label kind="synchronisation" x="160" y="272">advancetime!</label>
+			<nail x="256" y="288"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-224" y="296">ndelay!= 0</label>
+			<label kind="synchronisation" x="-232" y="312">advancetime?</label>
+			<nail x="-136" y="336"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-88" y="312">wait_clock &lt; ndelay</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="guard" x="72" y="344">wait_clock == ndelay</label>
+			<nail x="336" y="384"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="80" y="-88">wait!</label>
+			<label kind="assignment" x="80" y="-72">wait_clock = 0,
+ndelay = 0</label>
+			<nail x="248" y="-24"/>
+			<nail x="-8" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="104" y="72">notify_imm?</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="88" y="-8">notify_imm?</label>
+			<nail x="-8" y="24"/>
+			<nail x="248" y="24"/>
+		</transition>
+	</template>
+	<template>
+		<name>SchedulerTemplate</name>
+		<location id="id8" x="520" y="-16">
+			<name x="510" y="-46">execute</name>
+			<urgent/>
+		</location>
+		<location id="id9" x="520" y="80">
+			<name x="536" y="72">evaluate</name>
+			<urgent/>
+		</location>
+		<location id="id10" x="520" y="232">
+			<name x="536" y="208">update</name>
+			<urgent/>
+		</location>
+		<location id="id11" x="520" y="328">
+			<name x="496" y="344">updating</name>
+			<urgent/>
+		</location>
+		<location id="id12" x="184" y="232">
+			<name x="152" y="248">nextdelta</name>
+			<urgent/>
+		</location>
+		<location id="id13" x="184" y="80">
+			<name x="128" y="48">time_progress</name>
+		</location>
+		<init ref="id9"/>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="guard" x="552" y="0">readyprocs &gt; 0</label>
+			<label kind="synchronisation" x="560" y="16">activate!</label>
+			<nail x="544" y="32"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="416" y="0">deactivate?</label>
+			<nail x="496" y="32"/>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="528" y="112">readyprocs == 0</label>
+			<label kind="assignment" x="528" y="128">deltacount = (deltacount + 1) % 2</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="552" y="240">updaterequests &gt; 0</label>
+			<label kind="synchronisation" x="560" y="256">updatestart!</label>
+			<nail x="544" y="280"/>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id10"/>
+			<label kind="synchronisation" x="416" y="256">updateend?</label>
+			<nail x="496" y="280"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id12"/>
+			<label kind="guard" x="288" y="200">updaterequests == 0</label>
+			<label kind="synchronisation" x="320" y="216">deltadelay!</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="guard" x="64" y="128">readyprocs == 0</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id9"/>
+			<label kind="guard" x="312" y="96">readyprocs &gt; 0</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="312" y="48">advancetime?</label>
+		</transition>
+	</template>
+	<template>
+		<name>ThreadStarterTemplate</name>
+		<parameter>chan &amp;ctrl</parameter>
+		<location id="id14" x="8" y="-16">
+			<urgent/>
+		</location>
+		<location id="id15" x="8" y="40">
+			<urgent/>
+		</location>
+		<location id="id16" x="8" y="96">
+		</location>
+		<location id="id17" x="8" y="152">
+			<urgent/>
+		</location>
+		<location id="id18" x="8" y="224">
+		</location>
+		<init ref="id14"/>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="16" y="-16">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="16" y="40">ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="16" y="96">ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id18"/>
+			<label kind="synchronisation" x="16" y="152">deactivate!</label>
+			<label kind="assignment" x="16" y="168">readyprocs--</label>
+		</transition>
+	</template>
+	<template>
+		<name>consumer#consume</name>
+		<parameter>broadcast chan &amp;timeoutevent#wait, chan &amp;timeoutevent#notify, int &amp;timeoutevent#notify_t, chan &amp;consume#ctrl, int &amp;consume#param#c_param</parameter>
+		<declaration>int c_param;
+int wait_time;
+</declaration>
+		<location id="id19" x="192" y="-56">
+			<name x="182" y="-86">mon_start</name>
+		</location>
+		<location id="id20" x="190" y="80">
+			<name x="136" y="72">mon1</name>
+			<urgent/>
+		</location>
+		<location id="id21" x="190" y="230">
+			<name x="136" y="232">mon2</name>
+			<committed/>
+		</location>
+		<location id="id22" x="512" y="80">
+			<name x="528" y="64">mon3</name>
+			<urgent/>
+		</location>
+		<location id="id23" x="512" y="-56">
+			<name x="502" y="-86">mon_end</name>
+			<urgent/>
+		</location>
+		<location id="id24" x="512" y="232">
+			<name x="502" y="202">mon5</name>
+		</location>
+		<init ref="id19"/>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id20"/>
+			<label kind="synchronisation" x="192" y="-16">consume#ctrl?</label>
+			<label kind="assignment" x="192" y="0">c_param=consume#param#c_param,
+wait_time=200</label>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="192" y="112">deactivate!</label>
+			<label kind="assignment" x="192" y="128">readyprocs--</label>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id23"/>
+			<label kind="synchronisation" x="520" y="-8">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="208" y="200">timeoutevent#notify!</label>
+			<label kind="assignment" x="208" y="216">timeoutevent#notify_t = wait_time</label>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="520" y="120">timeoutevent#wait?</label>
+			<label kind="assignment" x="520" y="136">readyprocs++</label>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id19"/>
+			<label kind="synchronisation" x="312" y="-88">consume#ctrl!</label>
+			<label kind="assignment" x="312" y="-72">c_param = 0,
+wait_time = 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>consumer#main_method</name>
+		<parameter>broadcast chan &amp;sensitive, chan &amp;fifo#read#ctrl, int &amp;fifo#read#return, chan &amp;consume#ctrl, int &amp;consume#param#c_param, chan &amp;main_method#ctrl</parameter>
+		<declaration>int c;
+</declaration>
+		<location id="id25" x="40" y="-88">
+			<name x="-40" y="-112">mon_start</name>
+		</location>
+		<location id="id26" x="40" y="0">
+			<name x="48" y="-24">mon1</name>
+			<urgent/>
+		</location>
+		<location id="id27" x="40" y="72">
+			<name x="56" y="64">mon2</name>
+			<urgent/>
+		</location>
+		<location id="id28" x="-96" y="0">
+			<name x="-176" y="0">mon_end</name>
+			<urgent/>
+		</location>
+		<location id="id29" x="40" y="160">
+			<name x="56" y="152">mon4</name>
+		</location>
+		<location id="id30" x="40" y="240">
+			<name x="56" y="232">mon5</name>
+			<urgent/>
+		</location>
+		<location id="id31" x="40" y="304">
+			<name x="56" y="296">mon6</name>
+			<urgent/>
+		</location>
+		<location id="id32" x="40" y="368">
+			<name x="56" y="360">mon7</name>
+		</location>
+		<location id="id33" x="40" y="440">
+			<name x="56" y="432">mon8</name>
+			<urgent/>
+		</location>
+		<location id="id34" x="40" y="520">
+			<name x="56" y="504">mon9</name>
+		</location>
+		<init ref="id25"/>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id26"/>
+			<label kind="synchronisation" x="48" y="-80">main_method#ctrl?</label>
+			<label kind="assignment" x="48" y="-64">c=0</label>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id27"/>
+			<label kind="guard" x="48" y="8">true</label>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id29"/>
+			<label kind="synchronisation" x="48" y="80">deactivate!</label>
+			<label kind="assignment" x="48" y="96">readyprocs--</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id31"/>
+			<label kind="synchronisation" x="48" y="248">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id30"/>
+			<label kind="synchronisation" x="48" y="168">sensitive?</label>
+			<label kind="assignment" x="48" y="184">readyprocs++</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id32"/>
+			<label kind="synchronisation" x="48" y="312">fifo#read#ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id33"/>
+			<label kind="synchronisation" x="55" y="365">fifo#read#ctrl?</label>
+			<label kind="assignment" x="55" y="380">c = fifo#read#return,
+fifo#read#return = 0</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id34"/>
+			<label kind="synchronisation" x="48" y="448">consume#ctrl!</label>
+			<label kind="assignment" x="48" y="464">consume#param#c_param = c</label>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id26"/>
+			<label kind="synchronisation" x="48" y="520">consume#ctrl?</label>
+			<label kind="assignment" x="48" y="536">consume#param#c_param = 0</label>
+			<nail x="40" y="576"/>
+			<nail x="336" y="576"/>
+			<nail x="336" y="0"/>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id28"/>
+			<label kind="guard" x="-48" y="-8">!(true)</label>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id25"/>
+			<label kind="synchronisation" x="-152" y="-88">main_method#ctrl!</label>
+			<label kind="assignment" x="-152" y="-72">c = 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>consumer#thread0#sensitiveTemp</name>
+		<parameter>broadcast chan &amp;sensitive, broadcast chan &amp;c_clock</parameter>
+		<location id="id35" x="40" y="80">
+		</location>
+		<location id="id36" x="190" y="80">
+			<committed/>
+		</location>
+		<init ref="id35"/>
+		<transition>
+			<source ref="id36"/>
+			<target ref="id35"/>
+			<label kind="synchronisation" x="88" y="104">sensitive!</label>
+			<nail x="112" y="112"/>
+		</transition>
+		<transition>
+			<source ref="id35"/>
+			<target ref="id36"/>
+			<label kind="synchronisation" x="88" y="16">c_clock?</label>
+			<nail x="112" y="48"/>
+		</transition>
+	</template>
+	<template>
+		<name>myfifo#read</name>
+		<parameter>int &amp;buffer[3], int &amp;n, int &amp;r_pos, broadcast chan &amp;w_event#wait, chan &amp;r_event#notify, chan &amp;r_event#notify_imm, chan &amp;read#ctrl, int &amp;read#return</parameter>
+		<declaration>int c;
+</declaration>
+		<location id="id37" x="40" y="80">
+		</location>
+		<location id="id38" x="40" y="160">
+			<urgent/>
+		</location>
+		<location id="id39" x="224" y="160">
+			<urgent/>
+		</location>
+		<location id="id40" x="224" y="256">
+		</location>
+		<location id="id41" x="224" y="368">
+			<urgent/>
+		</location>
+		<location id="id42" x="40" y="368">
+			<urgent/>
+		</location>
+		<location id="id43" x="40" y="480">
+			<urgent/>
+		</location>
+		<location id="id44" x="40" y="536">
+			<urgent/>
+		</location>
+		<init ref="id37"/>
+		<transition>
+			<source ref="id37"/>
+			<target ref="id38"/>
+			<label kind="synchronisation" x="48" y="88">read#ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id38"/>
+			<target ref="id39"/>
+			<label kind="guard" x="80" y="128">(n) == (0)</label>
+		</transition>
+		<transition>
+			<source ref="id39"/>
+			<target ref="id40"/>
+			<label kind="synchronisation" x="232" y="168">deactivate!</label>
+			<label kind="assignment" x="232" y="184">readyprocs--</label>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id42"/>
+			<label kind="synchronisation" x="112" y="336">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id40"/>
+			<target ref="id41"/>
+			<label kind="synchronisation" x="232" y="264">w_event#wait?</label>
+			<label kind="assignment" x="232" y="280">readyprocs++</label>
+		</transition>
+		<transition>
+			<source ref="id38"/>
+			<target ref="id42"/>
+			<label kind="guard" x="-48" y="176">!((n) == (0))</label>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id43"/>
+			<label kind="assignment" x="48" y="392">c = buffer[r_pos],
+n = (n) - (1),
+r_pos = ((r_pos) + (1)) % (3)</label>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id44"/>
+			<label kind="synchronisation" x="56" y="480">r_event#notify_imm!</label>
+		</transition>
+		<transition>
+			<source ref="id44"/>
+			<target ref="id37"/>
+			<label kind="synchronisation" x="-152" y="280">read#ctrl!</label>
+			<label kind="assignment" x="-152" y="296">read#return = c,
+c = 0</label>
+			<nail x="-160" y="536"/>
+			<nail x="-160" y="80"/>
+		</transition>
+	</template>
+	<template>
+		<name>myfifo#write</name>
+		<parameter>int &amp;buffer[3], int &amp;n, int &amp;w_pos, chan &amp;w_event#notify, chan &amp;w_event#notify_imm, broadcast chan &amp;r_event#wait, chan &amp;write#ctrl, int &amp;write#param#c</parameter>
+		<declaration>int c;
+</declaration>
+		<location id="id45" x="48" y="0">
+		</location>
+		<location id="id46" x="48" y="80">
+			<urgent/>
+		</location>
+		<location id="id47" x="304" y="80">
+			<urgent/>
+		</location>
+		<location id="id48" x="304" y="200">
+		</location>
+		<location id="id49" x="304" y="272">
+			<urgent/>
+		</location>
+		<location id="id50" x="48" y="272">
+			<urgent/>
+		</location>
+		<location id="id51" x="48" y="400">
+			<urgent/>
+		</location>
+		<location id="id52" x="48" y="488">
+			<urgent/>
+		</location>
+		<init ref="id45"/>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id46"/>
+			<label kind="synchronisation" x="56" y="8">write#ctrl?</label>
+			<label kind="assignment" x="56" y="24">c=write#param#c</label>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id47"/>
+			<label kind="guard" x="136" y="48">(n) == (3)</label>
+		</transition>
+		<transition>
+			<source ref="id47"/>
+			<target ref="id48"/>
+			<label kind="synchronisation" x="312" y="104">deactivate!</label>
+			<label kind="assignment" x="312" y="120">readyprocs--</label>
+		</transition>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id50"/>
+			<label kind="synchronisation" x="144" y="240">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id48"/>
+			<target ref="id49"/>
+			<label kind="synchronisation" x="312" y="200">r_event#wait?</label>
+			<label kind="assignment" x="312" y="216">readyprocs++</label>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id50"/>
+			<label kind="guard" x="-40" y="96">!((n) == (3))</label>
+		</transition>
+		<transition>
+			<source ref="id50"/>
+			<target ref="id51"/>
+			<label kind="assignment" x="56" y="304">buffer[w_pos] = c,
+n = (n) + (1),
+w_pos = ((w_pos) + (1)) % (3)</label>
+		</transition>
+		<transition>
+			<source ref="id51"/>
+			<target ref="id52"/>
+			<label kind="synchronisation" x="56" y="408">w_event#notify_imm!</label>
+		</transition>
+		<transition>
+			<source ref="id52"/>
+			<target ref="id45"/>
+			<label kind="synchronisation" x="-104" y="296">write#ctrl!</label>
+			<label kind="assignment" x="-104" y="312">c = 0</label>
+			<nail x="-120" y="488"/>
+			<nail x="-120" y="0"/>
+		</transition>
+	</template>
+	<template>
+		<name>producer#main_method</name>
+		<parameter>broadcast chan &amp;sensitive, chan &amp;fifo#write#ctrl, int &amp;fifo#write#param#c, chan &amp;produce#ctrl, int &amp;produce#param#c_param, int &amp;produce#return, chan &amp;main_method#ctrl</parameter>
+		<declaration>int c;
+</declaration>
+		<location id="id53" x="40" y="8">
+			<name x="30" y="-22">tc_start</name>
+		</location>
+		<location id="id54" x="40" y="96">
+			<name x="48" y="72">tc1</name>
+			<urgent/>
+		</location>
+		<location id="id55" x="40" y="168">
+			<name x="56" y="160">tc2</name>
+			<urgent/>
+		</location>
+		<location id="id56" x="-152" y="96">
+			<name x="-162" y="66">tc_end</name>
+			<urgent/>
+		</location>
+		<location id="id57" x="40" y="240">
+			<name x="56" y="224">tc4</name>
+		</location>
+		<location id="id58" x="40" y="312">
+			<name x="54" y="298">tc5</name>
+			<urgent/>
+		</location>
+		<location id="id59" x="40" y="384">
+			<name x="56" y="368">tc6</name>
+			<urgent/>
+		</location>
+		<location id="id60" x="40" y="456">
+			<name x="56" y="440">tc7</name>
+		</location>
+		<location id="id61" x="40" y="560">
+			<name x="56" y="544">tc8</name>
+			<urgent/>
+		</location>
+		<location id="id62" x="40" y="640">
+			<name x="56" y="632">tc9</name>
+		</location>
+		<init ref="id53"/>
+		<transition>
+			<source ref="id53"/>
+			<target ref="id54"/>
+			<label kind="synchronisation" x="48" y="16">main_method#ctrl?</label>
+			<label kind="assignment" x="48" y="32">c=0</label>
+		</transition>
+		<transition>
+			<source ref="id54"/>
+			<target ref="id55"/>
+			<label kind="guard" x="48" y="104">true</label>
+		</transition>
+		<transition>
+			<source ref="id55"/>
+			<target ref="id57"/>
+			<label kind="synchronisation" x="48" y="168">deactivate!</label>
+			<label kind="assignment" x="48" y="184">readyprocs--</label>
+		</transition>
+		<transition>
+			<source ref="id58"/>
+			<target ref="id59"/>
+			<label kind="synchronisation" x="48" y="320">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id57"/>
+			<target ref="id58"/>
+			<label kind="synchronisation" x="48" y="240">sensitive?</label>
+			<label kind="assignment" x="48" y="256">readyprocs++</label>
+		</transition>
+		<transition>
+			<source ref="id59"/>
+			<target ref="id60"/>
+			<label kind="synchronisation" x="48" y="384">produce#ctrl!</label>
+			<label kind="assignment" x="48" y="400">produce#param#c_param = c</label>
+		</transition>
+		<transition>
+			<source ref="id60"/>
+			<target ref="id61"/>
+			<label kind="synchronisation" x="48" y="456">produce#ctrl?</label>
+			<label kind="assignment" x="48" y="472">produce#param#c_param = 0,
+c = produce#return,
+produce#return = 0</label>
+		</transition>
+		<transition>
+			<source ref="id61"/>
+			<target ref="id62"/>
+			<label kind="synchronisation" x="48" y="568">fifo#write#ctrl!</label>
+			<label kind="assignment" x="48" y="584">fifo#write#param#c = c</label>
+		</transition>
+		<transition>
+			<source ref="id62"/>
+			<target ref="id54"/>
+			<label kind="synchronisation" x="48" y="648">fifo#write#ctrl?</label>
+			<label kind="assignment" x="48" y="664">fifo#write#param#c = 0</label>
+			<nail x="40" y="712"/>
+			<nail x="360" y="712"/>
+			<nail x="352" y="96"/>
+		</transition>
+		<transition>
+			<source ref="id54"/>
+			<target ref="id56"/>
+			<label kind="guard" x="-64" y="64">!(true)</label>
+		</transition>
+		<transition>
+			<source ref="id56"/>
+			<target ref="id53"/>
+			<label kind="synchronisation" x="-136" y="-8">main_method#ctrl!</label>
+			<label kind="assignment" x="-136" y="8">c = 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>producer#produce</name>
+		<parameter>broadcast chan &amp;timeoutevent#wait, chan &amp;timeoutevent#notify, int &amp;timeoutevent#notify_t, chan &amp;produce#ctrl, int &amp;produce#param#c_param, int &amp;produce#return</parameter>
+		<declaration>int c_param;
+int wait_time;
+</declaration>
+		<location id="id63" x="48" y="-24">
+			<name x="38" y="-54">tc_start</name>
+		</location>
+		<location id="id64" x="48" y="72">
+			<name x="64" y="64">tc1</name>
+			<urgent/>
+		</location>
+		<location id="id65" x="48" y="160">
+			<name x="64" y="152">tc2</name>
+			<committed/>
+		</location>
+		<location id="id66" x="48" y="344">
+			<name x="64" y="344">tc3</name>
+			<urgent/>
+		</location>
+		<location id="id67" x="48" y="256">
+			<name x="64" y="248">tc4</name>
+		</location>
+		<location id="id68" x="48" y="424">
+			<name x="64" y="416">tc_end</name>
+			<urgent/>
+		</location>
+		<init ref="id63"/>
+		<transition>
+			<source ref="id63"/>
+			<target ref="id64"/>
+			<label kind="synchronisation" x="56" y="-16">produce#ctrl?</label>
+			<label kind="assignment" x="56" y="0">c_param=produce#param#c_param,
+wait_time=100</label>
+		</transition>
+		<transition>
+			<source ref="id64"/>
+			<target ref="id65"/>
+			<label kind="synchronisation" x="56" y="80">deactivate!</label>
+			<label kind="assignment" x="56" y="96">readyprocs--</label>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id68"/>
+			<label kind="synchronisation" x="56" y="352">activate?</label>
+			<label kind="assignment" x="56" y="368">c_param = ((c_param) + (1)) % (10)</label>
+		</transition>
+		<transition>
+			<source ref="id65"/>
+			<target ref="id67"/>
+			<label kind="synchronisation" x="56" y="168">timeoutevent#notify!</label>
+			<label kind="assignment" x="56" y="184">timeoutevent#notify_t = wait_time</label>
+		</transition>
+		<transition>
+			<source ref="id67"/>
+			<target ref="id66"/>
+			<label kind="synchronisation" x="56" y="264">timeoutevent#wait?</label>
+			<label kind="assignment" x="56" y="280">readyprocs++</label>
+		</transition>
+		<transition>
+			<source ref="id68"/>
+			<target ref="id63"/>
+			<label kind="synchronisation" x="56" y="424">produce#ctrl!</label>
+			<label kind="assignment" x="56" y="440">produce#return = c_param,
+c_param = 0,
+wait_time = 0</label>
+			<nail x="48" y="504"/>
+			<nail x="352" y="504"/>
+			<nail x="352" y="-24"/>
+		</transition>
+	</template>
+	<template>
+		<name>producer#thread0#sensitiveTemp</name>
+		<parameter>broadcast chan &amp;sensitive, broadcast chan &amp;p_clock</parameter>
+		<location id="id69" x="40" y="80">
+		</location>
+		<location id="id70" x="190" y="80">
+			<committed/>
+		</location>
+		<init ref="id69"/>
+		<transition>
+			<source ref="id70"/>
+			<target ref="id69"/>
+			<label kind="synchronisation" x="88" y="120">sensitive!</label>
+			<nail x="112" y="128"/>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id70"/>
+			<label kind="synchronisation" x="88" y="0">p_clock?</label>
+			<nail x="120" y="32"/>
+		</transition>
+	</template>
+	<template>
+		<name>sc_clock#run</name>
+		<parameter>broadcast chan &amp;timeoutevent#wait, chan &amp;timeoutevent#notify, int &amp;timeoutevent#notify_t, chan &amp;edge#notify, int &amp;edge#notify_t, int &amp;period, chan &amp;run#ctrl</parameter>
+		<declaration>int tmp;
+</declaration>
+		<location id="id71" x="56" y="8">
+		</location>
+		<location id="id72" x="56" y="104">
+			<committed/>
+		</location>
+		<location id="id73" x="56" y="200">
+			<urgent/>
+		</location>
+		<location id="id74" x="56" y="272">
+			<urgent/>
+		</location>
+		<location id="id75" x="-128" y="200">
+			<urgent/>
+		</location>
+		<location id="id76" x="56" y="344">
+			<committed/>
+		</location>
+		<location id="id77" x="56" y="504">
+			<urgent/>
+		</location>
+		<location id="id78" x="56" y="592">
+			<committed/>
+		</location>
+		<location id="id79" x="56" y="424">
+		</location>
+		<init ref="id71"/>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id72"/>
+			<label kind="synchronisation" x="64" y="24">run#ctrl?</label>
+			<label kind="assignment" x="64" y="40">tmp=(period) / (2)</label>
+		</transition>
+		<transition>
+			<source ref="id72"/>
+			<target ref="id73"/>
+			<label kind="synchronisation" x="64" y="112">edge#notify!</label>
+			<label kind="assignment" x="64" y="128">edge#notify_t = 0</label>
+		</transition>
+		<transition>
+			<source ref="id73"/>
+			<target ref="id74"/>
+			<label kind="guard" x="64" y="208">true</label>
+		</transition>
+		<transition>
+			<source ref="id74"/>
+			<target ref="id76"/>
+			<label kind="synchronisation" x="64" y="272">deactivate!</label>
+			<label kind="assignment" x="64" y="287">readyprocs--</label>
+		</transition>
+		<transition>
+			<source ref="id77"/>
+			<target ref="id78"/>
+			<label kind="synchronisation" x="64" y="504">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id76"/>
+			<target ref="id79"/>
+			<label kind="synchronisation" x="64" y="345">timeoutevent#notify!</label>
+			<label kind="assignment" x="64" y="360">timeoutevent#notify_t = tmp</label>
+		</transition>
+		<transition>
+			<source ref="id79"/>
+			<target ref="id77"/>
+			<label kind="synchronisation" x="64" y="425">timeoutevent#wait?</label>
+			<label kind="assignment" x="64" y="440">readyprocs++</label>
+		</transition>
+		<transition>
+			<source ref="id78"/>
+			<target ref="id73"/>
+			<label kind="synchronisation" x="112" y="536">edge#notify!</label>
+			<label kind="assignment" x="112" y="552">edge#notify_t = 0</label>
+			<nail x="320" y="592"/>
+			<nail x="320" y="200"/>
+		</transition>
+		<transition>
+			<source ref="id73"/>
+			<target ref="id75"/>
+			<label kind="guard" x="-64" y="168">!(true)</label>
+		</transition>
+		<transition>
+			<source ref="id75"/>
+			<target ref="id71"/>
+			<label kind="synchronisation" x="-96" y="40">run#ctrl!</label>
+			<label kind="assignment" x="-96" y="56">tmp = 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>sc_clock#thread0#sensitiveTemp</name>
+		<parameter>broadcast chan &amp;sensitive</parameter>
+		<location id="id80" x="40" y="80">
+		</location>
+		<location id="id81" x="190" y="80">
+			<committed/>
+		</location>
+		<init ref="id80"/>
+		<transition>
+			<source ref="id81"/>
+			<target ref="id80"/>
+			<label kind="synchronisation" x="88" y="64">sensitive!</label>
+			<nail x="112" y="80"/>
+		</transition>
+	</template>
+	<system>
+clk#edge = SCEventTemplate(clk#edge#wait, clk#edge#notify, clk#edge#notify_imm, clk#edge#notify_t);
+clk#thread0#sc_clock#run = sc_clock#run(clk#thread0#timeoutevent#wait, clk#thread0#timeoutevent#notify, clk#thread0#timeoutevent#notify_t, clk#edge#notify, clk#edge#notify_t, clk#period, clk#thread0#run#ctrl);
+clk#thread0#sensitive = sc_clock#thread0#sensitiveTemp(clk#thread0#sensitivechan);
+clk#thread0#starter = ThreadStarterTemplate(clk#thread0#run#ctrl);
+clk#thread0#timeoutevent = SCEventTemplate(clk#thread0#timeoutevent#wait, clk#thread0#timeoutevent#notify, clk#thread0#timeoutevent#notify_imm, clk#thread0#timeoutevent#notify_t);
+cons_inst#thread0#consumer#consume = consumer#consume(cons_inst#thread0#timeoutevent#wait, cons_inst#thread0#timeoutevent#notify, cons_inst#thread0#timeoutevent#notify_t, cons_inst#thread0#consume#ctrl, cons_inst#thread0#consume#param#c_param);
+cons_inst#thread0#consumer#main_method = consumer#main_method(cons_inst#thread0#sensitivechan, cons_inst#thread0#fifo#read#ctrl, cons_inst#thread0#fifo#read#return, cons_inst#thread0#consume#ctrl, cons_inst#thread0#consume#param#c_param, cons_inst#thread0#main_method#ctrl);
+cons_inst#thread0#fifo#myfifo#read = myfifo#read(fifo_inst#buffer, fifo_inst#n, fifo_inst#r_pos, fifo_inst#w_event#wait, fifo_inst#r_event#notify, fifo_inst#r_event#notify_imm, cons_inst#thread0#fifo#read#ctrl, cons_inst#thread0#fifo#read#return);
+cons_inst#thread0#sensitive = consumer#thread0#sensitiveTemp(cons_inst#thread0#sensitivechan, clk#edge#wait);
+cons_inst#thread0#starter = ThreadStarterTemplate(cons_inst#thread0#main_method#ctrl);
+cons_inst#thread0#timeoutevent = SCEventTemplate(cons_inst#thread0#timeoutevent#wait, cons_inst#thread0#timeoutevent#notify, cons_inst#thread0#timeoutevent#notify_imm, cons_inst#thread0#timeoutevent#notify_t);
+fifo_inst#r_event = SCEventTemplate(fifo_inst#r_event#wait, fifo_inst#r_event#notify, fifo_inst#r_event#notify_imm, fifo_inst#r_event#notify_t);
+fifo_inst#w_event = SCEventTemplate(fifo_inst#w_event#wait, fifo_inst#w_event#notify, fifo_inst#w_event#notify_imm, fifo_inst#w_event#notify_t);
+initialization = InitializerTemplate();
+prod_inst#thread0#fifo#myfifo#write = myfifo#write(fifo_inst#buffer, fifo_inst#n, fifo_inst#w_pos, fifo_inst#w_event#notify, fifo_inst#w_event#notify_imm, fifo_inst#r_event#wait, prod_inst#thread0#fifo#write#ctrl, prod_inst#thread0#fifo#write#param#c);
+prod_inst#thread0#producer#main_method = producer#main_method(prod_inst#thread0#sensitivechan, prod_inst#thread0#fifo#write#ctrl, prod_inst#thread0#fifo#write#param#c, prod_inst#thread0#produce#ctrl, prod_inst#thread0#produce#param#c_param, prod_inst#thread0#produce#return, prod_inst#thread0#main_method#ctrl);
+prod_inst#thread0#producer#produce = producer#produce(prod_inst#thread0#timeoutevent#wait, prod_inst#thread0#timeoutevent#notify, prod_inst#thread0#timeoutevent#notify_t, prod_inst#thread0#produce#ctrl, prod_inst#thread0#produce#param#c_param, prod_inst#thread0#produce#return);
+prod_inst#thread0#sensitive = producer#thread0#sensitiveTemp(prod_inst#thread0#sensitivechan, clk#edge#wait);
+prod_inst#thread0#starter = ThreadStarterTemplate(prod_inst#thread0#main_method#ctrl);
+prod_inst#thread0#timeoutevent = SCEventTemplate(prod_inst#thread0#timeoutevent#wait, prod_inst#thread0#timeoutevent#notify, prod_inst#thread0#timeoutevent#notify_imm, prod_inst#thread0#timeoutevent#notify_t);
+scheduler = SchedulerTemplate();
+
+
+system clk#edge,
+clk#thread0#sc_clock#run,
+clk#thread0#sensitive,
+clk#thread0#starter,
+clk#thread0#timeoutevent,
+cons_inst#thread0#consumer#consume,
+cons_inst#thread0#consumer#main_method,
+cons_inst#thread0#fifo#myfifo#read,
+cons_inst#thread0#sensitive,
+cons_inst#thread0#starter,
+cons_inst#thread0#timeoutevent,
+fifo_inst#r_event,
+fifo_inst#w_event,
+initialization,
+prod_inst#thread0#fifo#myfifo#write,
+prod_inst#thread0#producer#main_method,
+prod_inst#thread0#producer#produce,
+prod_inst#thread0#sensitive,
+prod_inst#thread0#starter,
+prod_inst#thread0#timeoutevent,
+scheduler;</system>
+	<queries>
+		<query>
+			<formula>scheduler.evaluate --&gt; clk#edge.notify_requested
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>

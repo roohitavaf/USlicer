@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+
+clock x;
+clock y;
+
+int s_data =0;
+int s_bit=0;
+int s_ack=0 ;
+const int T=500;
+const int N=10;
+int d=5;
+int D=8;
+
+int b_data =0;
+int b_bit = 0;
+int b_ack =0;
+
+int r_data=0;
+int r_bit=0;
+int r_tbit=0;
+
+chan send_data;
+chan rec_data;
+chan rec_ack;
+chan send_ack;
+</declaration>
+	<template>
+		<name x="5" y="5">Sender</name>
+		<declaration>// Place local declarations here.
+
+
+
+</declaration>
+		<location id="id0" x="433" y="-102">
+			<name x="423" y="-136">snd_check</name>
+		</location>
+		<location id="id1" x="178" y="-102">
+			<name x="168" y="-136">snd_wait</name>
+		</location>
+		<location id="id2" x="-8" y="-102">
+			<name x="-17" y="-136">snd_send</name>
+		</location>
+		<location id="id3" x="-204" y="-110">
+			<name x="-214" y="-144">snd_produce</name>
+		</location>
+		<location id="id4" x="-374" y="-110">
+			<name x="-384" y="-144">snd_init</name>
+		</location>
+		<init ref="id4"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id4"/>
+			<label kind="guard" x="42" y="127">s_ack==s_bit</label>
+			<label kind="assignment" x="42" y="153">s_bit=1-s_bit</label>
+			<nail x="365" y="119"/>
+			<nail x="-153" y="119"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="161" y="51">s_ack!=s_bit</label>
+			<nail x="357" y="76"/>
+			<nail x="59" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="255" y="-153">x&lt;=T</label>
+			<label kind="synchronisation" x="255" y="-127">rec_ack?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="76" y="-59">x==T</label>
+			<nail x="144" y="-34"/>
+			<nail x="42" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="51" y="-187">send_data!</label>
+			<label kind="assignment" x="51" y="-170">b_data=s_data,
+b_bit=s_bit,
+x=0</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-135" y="-93">s_data &lt;= N</label>
+			<nail x="-153" y="-59"/>
+			<nail x="-51" y="-59"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-143" y="-204">s_data&gt;N</label>
+			<label kind="assignment" x="-143" y="-170">s_data=1</label>
+			<nail x="-161" y="-170"/>
+			<nail x="-59" y="-170"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="assignment" x="-356" y="-110">s_data=s_data+1</label>
+		</transition>
+	</template>
+	<template>
+		<name>Faulty_Buffer</name>
+		<declaration>
+
+
+</declaration>
+		<location id="id5" x="263" y="0">
+			<name x="280" y="8">buffer_data</name>
+		</location>
+		<location id="id6" x="-229" y="0">
+			<name x="-289" y="17">buffer_ack</name>
+		</location>
+		<location id="id7" x="0" y="0">
+			<name x="-25" y="-59">buffer_init</name>
+		</location>
+		<init ref="id7"/>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="-178" y="-119">send_ack?</label>
+			<label kind="assignment" x="-170" y="-102">y=0</label>
+			<nail x="-42" y="-76"/>
+			<nail x="-195" y="-76"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-153" y="-25">d&lt;y &amp;&amp; y&lt;D</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-170" y="76">d&lt;y &amp;&amp; y&lt;D</label>
+			<label kind="synchronisation" x="-170" y="93">rec_ack!</label>
+			<label kind="assignment" x="-170" y="110">s_ack = b_ack</label>
+			<nail x="-187" y="76"/>
+			<nail x="-59" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="51" y="-136">send_data?</label>
+			<label kind="assignment" x="51" y="-119">y=0</label>
+			<nail x="34" y="-93"/>
+			<nail x="212" y="-93"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="85" y="85">d&lt;y &amp;&amp; y&lt;D</label>
+			<label kind="synchronisation" x="85" y="102">rec_data!</label>
+			<label kind="assignment" x="85" y="119">r_tbit=b_bit,
+r_data=b_data</label>
+			<nail x="211" y="85"/>
+			<nail x="58" y="85"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="93" y="-34">d&lt;y &amp;&amp; y&lt;D</label>
+		</transition>
+	</template>
+	<template>
+		<name>Receiver</name>
+		<location id="id8" x="187" y="0">
+			<name x="204" y="-25">rcv_ack</name>
+		</location>
+		<location id="id9" x="0" y="0">
+			<name x="-42" y="-34">rcv_init</name>
+		</location>
+		<init ref="id9"/>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="guard" x="51" y="51">r_tbit!=r_bit</label>
+			<label kind="synchronisation" x="51" y="68">send_ack!</label>
+			<label kind="assignment" x="51" y="85">b_ack=r_bit</label>
+			<nail x="161" y="51"/>
+			<nail x="34" y="51"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="guard" x="42" y="-144">r_tbit==r_bit</label>
+			<label kind="synchronisation" x="42" y="-127">send_ack!</label>
+			<label kind="assignment" x="42" y="-110">b_ack=r_bit,
+r_bit=1-r_bit</label>
+			<nail x="161" y="-59"/>
+			<nail x="17" y="-59"/>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="68" y="-25">rec_data?</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+// Process = Template();
+// List one or more processes to be composed into a system.
+system Sender,Faulty_Buffer,Receiver;
+    </system>
+	<queries>
+		<query>
+			<formula>A[] not (Sender.snd_init) || (s_bit==r_bit)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>

@@ -1,0 +1,2843 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>typedef int short;
+typedef int unsigned_short;
+typedef int uint64;
+typedef int tlm_sync_enum;
+const tlm_sync_enum END_RESP = 2;
+const tlm_sync_enum TLM_UPDATED = 2;
+const tlm_sync_enum BEGIN_RESP = 1;
+const tlm_sync_enum TLM_ACCEPTED = 1;
+const tlm_sync_enum TLM_GENERIC_ERROR_RESPONSE = 64;
+const tlm_sync_enum TLM_INCOMPLETE_RESPONSE = 16;
+const tlm_sync_enum END_REQ = 8;
+const tlm_sync_enum TLM_OK_RESPONSE = 32;
+const tlm_sync_enum TLM_COMPLETED = 4;
+const tlm_sync_enum BEGIN_REQ = 4;
+const tlm_sync_enum TLM_WRITE_COMMAND = 16;
+const tlm_sync_enum TLM_IGNORE_COMMAND = 32;
+const tlm_sync_enum TLM_READ_COMMAND = 8;
+const tlm_sync_enum TLM_BURST_ERROR_RESPONSE = 32;
+typedef int tlm_dmi;
+typedef int sc_uint;
+typedef int unsigned_int;
+clock global;
+
+///////////////////////////
+// MEMORY ALLOCATION STATES
+///////////////////////////
+
+const int MEM_FREE = 0;
+const int MEM_STATIC_OBJ = 1;
+const int MEM_STATIC_ARR_HEAD = 2;
+const int MEM_STATIC_ARR_TAIL = 3;
+const int MEM_DYN_OBJ = 4;
+const int MEM_DYN_ARR_HEAD = 5;
+const int MEM_DYN_ARR_TAIL = 6;
+const int NULL = -1;
+
+////////////////////////
+// MEMORY RELATED ERRORS
+////////////////////////
+
+bool MEM_ERR_DOUBLE_FREE = false;
+bool MEM_ERR_INVALID_ARR_DELETE = false;
+bool MEM_ERR_INVALID_OBJ_DELETE = false;
+bool MEM_ERR_DELETE_ON_STATIC_VAR = false;
+bool MEM_ERR_NOT_ENOUGH_MEM = false;
+bool MEM_ERR_CORRUPTED_MEM = false;
+bool MEM_ERR_FRAGMENTED_MEM = false;
+
+
+///////////////////
+// BOOL - globals
+///////////////////
+
+const bool DEFAULT_BOOL_VALUE = false;
+const int BOOL_MEMSIZE = 0;
+int BOOL_FREE_MEM = BOOL_MEMSIZE;
+typedef int[NULL, BOOL_MEMSIZE-1] bool_addr_ptr;
+
+
+///////////////////
+// INT - globals
+///////////////////
+
+const int DEFAULT_INT_VALUE = 0;
+const int INT_MEMSIZE = 14;
+int INT_FREE_MEM = INT_MEMSIZE;
+typedef int[NULL, INT_MEMSIZE-1] int_addr_ptr;
+int[0, 6] intMemState[INT_MEMSIZE];
+int intMem[INT_MEMSIZE];
+bool MEM_ERR_FRAGMENTED_MEM_INT = false;
+bool MEM_ERR_NOT_ENOUGH_MEM_INT = false;
+
+
+///////////////////
+// TLM_DMI - globals
+///////////////////
+
+const tlm_dmi DEFAULT_TLM_DMI_VALUE = 0;
+const int TLM_DMI_MEMSIZE = 0;
+int TLM_DMI_FREE_MEM = TLM_DMI_MEMSIZE;
+typedef int[NULL, TLM_DMI_MEMSIZE-1] tlm_dmi_addr_ptr;
+
+
+///////////////////
+// TLM_SYNC_ENUM - globals
+///////////////////
+
+const tlm_sync_enum DEFAULT_TLM_SYNC_ENUM_VALUE = 0;
+const int TLM_SYNC_ENUM_MEMSIZE = 0;
+int TLM_SYNC_ENUM_FREE_MEM = TLM_SYNC_ENUM_MEMSIZE;
+typedef int[NULL, TLM_SYNC_ENUM_MEMSIZE-1] tlm_sync_enum_addr_ptr;
+
+
+///////////////////
+// UINT64 - globals
+///////////////////
+
+const uint64 DEFAULT_UINT64_VALUE = 0;
+const int UINT64_MEMSIZE = 0;
+int UINT64_FREE_MEM = UINT64_MEMSIZE;
+typedef int[NULL, UINT64_MEMSIZE-1] uint64_addr_ptr;
+
+
+///////////////////
+// DATA - globals
+///////////////////
+
+typedef struct {int val;} data;
+const data DEFAULT_DATA_VALUE = {0};
+const int DATA_MEMSIZE = 9;
+int DATA_FREE_MEM = DATA_MEMSIZE;
+typedef int[NULL, DATA_MEMSIZE-1] data_addr_ptr;
+int[0, 6] dataMemState[DATA_MEMSIZE];
+data dataMem[DATA_MEMSIZE];
+bool MEM_ERR_FRAGMENTED_MEM_DATA = false;
+bool MEM_ERR_NOT_ENOUGH_MEM_DATA = false;
+
+
+///////////////////
+// Global Variable Definition
+///////////////////
+
+bool PEQ_ERR_OUT_OF_ELEMENTS = false;
+data_addr_ptr prod_d = NULL;
+chan activate;
+chan deactivate;
+chan updatestart;
+chan updateend;
+broadcast chan initdone;
+broadcast chan deltadelay;
+broadcast chan advancetime;
+int deltacount = 0;
+int readyprocs = 1;
+int updaterequests = 0;
+chan scmodules_initialized;
+broadcast chan dummybchannel;
+chan dummychannel;
+int dummyinteger;
+broadcast chan prod_thread0_sensitivechan;
+broadcast chan prod_thread0_timeoutevent_wait;
+chan prod_thread0_timeoutevent_notify;
+chan prod_thread0_timeoutevent_notify_imm;
+int prod_thread0_timeoutevent_notify_t;
+chan prod_thread0_Producer_initiator_main_ctrl;
+chan cons_Consumer_nb_transport_fw_ctrl;
+data_addr_ptr cons_Consumer_nb_transport_fw_param_tran = NULL;
+int_addr_ptr cons_Consumer_nb_transport_fw_param_phase = NULL;
+int_addr_ptr cons_Consumer_nb_transport_fw_param_t = NULL;
+tlm_sync_enum cons_Consumer_nb_transport_fw_return;
+chan cons_cons_peq_notify_peq_notify_ctrl;
+chan cons_cons_peq_notify_peq_element_ctrl[4];
+bool cons_cons_peq_notify_peqInUse[4];
+data_addr_ptr cons_cons_peq_fetch_peq_cb_param_tran = NULL;
+chan cons_cons_peq_fetch_peq_fetch_ctrl;
+int_addr_ptr cons_cons_peq_fetch_peq_cb_param_phase = NULL;
+int cons_cons_peq_peq_element_param_delay;
+data_addr_ptr cons_cons_peq_peq_element_param_trans = NULL;
+int_addr_ptr cons_cons_peq_peq_element_param_phase = NULL;
+chan cons_Consumer_cons_peq_cb_ctrl;
+data_addr_ptr cons_Consumer_cons_peq_cb_param_tran = NULL;
+int_addr_ptr cons_Consumer_cons_peq_cb_param_phase = NULL;
+chan prod_Producer_nb_transport_bw_ctrl;
+data_addr_ptr prod_Producer_nb_transport_bw_param_tran = NULL;
+int_addr_ptr prod_Producer_nb_transport_bw_param_phase = NULL;
+int_addr_ptr prod_Producer_nb_transport_bw_param_t = NULL;
+tlm_sync_enum prod_Producer_nb_transport_bw_return;
+chan prod_prod_peq_notify_peq_notify_ctrl;
+chan prod_prod_peq_notify_peq_element_ctrl[4];
+bool prod_prod_peq_notify_peqInUse[4];
+data_addr_ptr prod_prod_peq_fetch_peq_cb_param_tran = NULL;
+chan prod_prod_peq_fetch_peq_fetch_ctrl;
+int_addr_ptr prod_prod_peq_fetch_peq_cb_param_phase = NULL;
+int prod_prod_peq_peq_element_param_delay;
+data_addr_ptr prod_prod_peq_peq_element_param_trans = NULL;
+int_addr_ptr prod_prod_peq_peq_element_param_phase = NULL;
+chan prod_Producer_prod_peq_cb_ctrl;
+data_addr_ptr prod_Producer_prod_peq_cb_param_tran = NULL;
+int_addr_ptr prod_Producer_prod_peq_cb_param_phase = NULL;
+
+
+///////////////////
+// INT - helper functions
+///////////////////
+
+bool is_free_elem_int(int_addr_ptr pos) {
+	return intMemState[pos] == MEM_FREE;
+}
+
+bool is_obj_elem_int(int_addr_ptr pos) {
+	return intMemState[pos] == MEM_STATIC_OBJ || intMemState[pos] == MEM_DYN_OBJ;
+}
+
+bool is_static_elem_int(int_addr_ptr pos) {
+	return intMemState[pos] == MEM_STATIC_OBJ || intMemState[pos] == MEM_STATIC_ARR_HEAD || intMemState[pos] == MEM_STATIC_ARR_TAIL;
+}
+
+bool is_dynamic_elem_int(int_addr_ptr pos) {
+	return intMemState[pos] == MEM_DYN_OBJ || intMemState[pos] == MEM_DYN_ARR_HEAD || intMemState[pos] == MEM_DYN_ARR_TAIL;
+}
+
+bool is_arr_head_elem_int(int_addr_ptr pos) {
+	return intMemState[pos] == MEM_STATIC_ARR_HEAD || intMemState[pos] == MEM_DYN_ARR_HEAD;
+}
+
+bool is_arr_tail_elem_int(int_addr_ptr pos) {
+	return intMemState[pos] == MEM_STATIC_ARR_TAIL || intMemState[pos] == MEM_DYN_ARR_TAIL;
+}
+
+void check_mem_errors_for_delete_int(int_addr_ptr pos, bool isStatic, bool shouldBeAnArray) {
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else if (is_free_elem_int(pos)) {
+		MEM_ERR_DOUBLE_FREE = true;
+	} else if (not is_obj_elem_int(pos) &amp;&amp; not is_arr_head_elem_int(pos)) {
+		// something went completely wrong :(
+		// ex: delete somewhere in the middle of an array
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		if (!isStatic &amp;&amp; is_static_elem_int(pos)) {
+			MEM_ERR_DELETE_ON_STATIC_VAR = true;
+		}
+		if (shouldBeAnArray) {
+			if (not is_arr_head_elem_int(pos)) {
+				MEM_ERR_INVALID_ARR_DELETE = true; // shouldn't have called 'delete []' ?
+			}
+		} else { // delete normal obj
+			if (not is_obj_elem_int(pos)) {
+				MEM_ERR_INVALID_OBJ_DELETE = true;
+			}
+		}
+	}
+}
+
+bool addr_is_in_range_int(int pos) {
+	return pos &gt;= 0 &amp;&amp; pos &lt; INT_MEMSIZE;
+}
+
+bool addr_is_valid_int(int_addr_ptr pos) {
+	return pos != NULL &amp;&amp; intMemState[pos] != MEM_FREE;
+}
+
+bool is_arr_elem_int(int head, int index) {
+	int i;
+	if (!addr_is_in_range_int(head + index)) {
+		return false;
+	}
+	if (!is_arr_head_elem_int(head)) {
+		return false;
+	}
+	if (index &lt; 0) { // assuming heap/stack arrays grow leftward
+		return false;
+	}
+	for (i = head + 1; i &lt;= head + index; i++) {
+		if (!is_arr_tail_elem_int(i)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+
+///////////////////
+// INT - private
+///////////////////
+
+void allocate_and_init_int(int memState, int_addr_ptr pos, int value) {
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		intMemState[pos] = memState;
+		intMem[pos] = value;
+        if (memState == MEM_FREE) {
+            INT_FREE_MEM++;
+        } else {
+            INT_FREE_MEM--;
+        }
+	}
+}
+
+void allocate_int(int memState, int_addr_ptr pos) {
+	allocate_and_init_int(memState, pos, DEFAULT_INT_VALUE);
+}
+
+int_addr_ptr find_free_pos_int(int memState) {
+	int_addr_ptr pos = NULL;
+	if (memState == MEM_STATIC_OBJ) { // stack
+		for(pos = 0; pos &lt;= INT_MEMSIZE - 1; pos++) {
+			if (intMemState[pos] == MEM_FREE) {
+				return pos;
+			}
+		}
+	} else if (memState == MEM_DYN_OBJ) { // heap
+		for(pos = INT_MEMSIZE - 1; pos &gt;= 0; pos--) {
+			if (intMemState[pos] == MEM_FREE) {
+				return pos;
+			}
+		}
+	}
+	return NULL;
+}
+
+int_addr_ptr find_free_pos_and_allocate_and_init_int(int memState, int value) {
+	int_addr_ptr pos;
+	if (INT_FREE_MEM == 0) {
+		MEM_ERR_NOT_ENOUGH_MEM = true;
+		MEM_ERR_NOT_ENOUGH_MEM_INT = true;
+		return NULL;
+	}
+	pos = find_free_pos_int(memState);
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		allocate_and_init_int(memState, pos, value);
+	}
+	return pos;
+}
+
+int_addr_ptr find_free_pos_and_allocate_int(int memState) {
+	return find_free_pos_and_allocate_and_init_int(memState, DEFAULT_INT_VALUE);
+}
+
+void delete_int(int_addr_ptr pos, bool isStatic) {
+	check_mem_errors_for_delete_int(pos, isStatic, false);
+	allocate_and_init_int(MEM_FREE, pos, DEFAULT_INT_VALUE);
+}
+//////////////////
+// INT - public
+//////////////////
+
+int_addr_ptr allocate_static_int() {
+	return find_free_pos_and_allocate_and_init_int(MEM_STATIC_OBJ, DEFAULT_INT_VALUE);
+}
+
+int_addr_ptr allocate_dynamic_int() {
+	return find_free_pos_and_allocate_and_init_int(MEM_DYN_OBJ, DEFAULT_INT_VALUE);
+}
+
+int_addr_ptr allocate_static_and_init_int(int value) {
+	return find_free_pos_and_allocate_and_init_int(MEM_STATIC_OBJ, value);
+}
+
+int_addr_ptr allocate_dynamic_and_init_int(int value) {
+	return find_free_pos_and_allocate_and_init_int(MEM_DYN_OBJ, value);
+}
+
+void delete_static_int(int_addr_ptr pos) {
+	delete_int(pos, true);
+}
+
+void delete_dynamic_int(int_addr_ptr pos) {
+	delete_int(pos, false);
+}
+
+void empty_stack_int(int_addr_ptr pos) {
+	if (pos != NULL) {
+	    allocate_and_init_int(MEM_FREE, pos, DEFAULT_INT_VALUE);
+	}
+}
+
+
+/////////////////////////
+// INT ARRAY - private
+/////////////////////////
+
+int_addr_ptr find_free_pos_arr_int(int memState, int length) {
+	int count = 0;
+	int_addr_ptr pos = -1;
+	int i = 0;
+	if (memState == MEM_STATIC_ARR_HEAD) {
+		for (i = 0; i &lt;= INT_MEMSIZE - 1; i++) {
+			if (intMemState[i] == MEM_FREE) {
+				if (count == 0) {
+					pos = i;
+				}
+				count++;
+				if (count == length) {
+					return pos;
+				}
+			} else if (is_static_elem_int(i)) {
+				count = 0;
+				pos = NULL;
+			} else {
+				return NULL;
+			}
+		}
+	} else if (memState == MEM_DYN_ARR_HEAD) {
+		for(i = INT_MEMSIZE - 1; i &gt;= 0; i--) {
+			if (intMemState[i] == MEM_FREE) {
+				if (count == 0) {
+					pos = i;
+				}
+				count++;
+				if (count == length) {
+					return pos - length + 1; // return the 'lower' index w.r.t. the memArray; + 1 because count starts at 0
+				}
+			} else if (is_static_elem_int(i)) {
+				count = 0;
+				pos = NULL;
+			} else {
+				return NULL;
+			}
+		}
+	}
+	return NULL;
+}
+
+int_addr_ptr allocate_arr_int(int memState, int length) {
+	int i;
+    int_addr_ptr pos;
+    int tailElemStateType;
+    if (INT_FREE_MEM &lt; length) {
+		MEM_ERR_NOT_ENOUGH_MEM = true;
+		MEM_ERR_NOT_ENOUGH_MEM_INT = true;
+		return NULL;
+	}
+	pos = find_free_pos_arr_int(memState, length);
+	if (pos == NULL) {
+		MEM_ERR_FRAGMENTED_MEM = true;
+		MEM_ERR_FRAGMENTED_MEM_INT = true;
+		return NULL;
+	}
+	if (memState == MEM_STATIC_ARR_HEAD) {
+		tailElemStateType = MEM_STATIC_ARR_TAIL;
+	} else {
+		tailElemStateType = MEM_DYN_ARR_TAIL;
+	}
+	allocate_int(memState, pos); // allocate head
+	for(i = pos + 1; i &lt; (pos + length); i++) {
+		allocate_int(tailElemStateType, i);
+	}
+	return pos;
+}
+
+void delete_arr_int(int_addr_ptr pos, bool isStatic) {
+	int i = pos + 1;
+	check_mem_errors_for_delete_int(pos, isStatic, true);
+	allocate_and_init_int(MEM_FREE, pos, DEFAULT_INT_VALUE);
+	while(i &lt; INT_MEMSIZE &amp;&amp; is_arr_tail_elem_int(i)) {
+		allocate_and_init_int(MEM_FREE, pos, DEFAULT_INT_VALUE);
+		i=i+1;
+	}
+}
+
+////////////////////////
+// INT ARRAY - public
+////////////////////////
+
+int_addr_ptr allocate_static_arr_int(int length) {
+	return allocate_arr_int(MEM_STATIC_ARR_HEAD, length);
+}
+
+int_addr_ptr allocate_dynamic_arr_int(int length) {
+	return allocate_arr_int(MEM_DYN_ARR_HEAD, length);
+}
+
+void delete_arr_static_int(int_addr_ptr pos) {
+	delete_arr_int(pos, true);
+}
+
+void delete_arr_dynamic_int(int_addr_ptr pos) {
+	delete_arr_int(pos, false);
+}
+
+void empty_stack_arr_int(int_addr_ptr pos) {
+	int i = pos + 1;
+	if (pos != NULL) {
+		allocate_and_init_int(MEM_FREE, pos, DEFAULT_INT_VALUE);
+		while(i &lt; INT_MEMSIZE &amp;&amp; is_arr_tail_elem_int(i)) {
+			allocate_and_init_int(MEM_FREE, pos, DEFAULT_INT_VALUE);
+			i++;
+		}
+	}
+}
+
+void init_arr_elem_int(int_addr_ptr pos, int value) {
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		intMem[pos] = value;
+	}
+}
+
+
+
+
+
+///////////////////
+// DATA - helper functions
+///////////////////
+
+bool is_free_elem_data(data_addr_ptr pos) {
+	return dataMemState[pos] == MEM_FREE;
+}
+
+bool is_obj_elem_data(data_addr_ptr pos) {
+	return dataMemState[pos] == MEM_STATIC_OBJ || dataMemState[pos] == MEM_DYN_OBJ;
+}
+
+bool is_static_elem_data(data_addr_ptr pos) {
+	return dataMemState[pos] == MEM_STATIC_OBJ || dataMemState[pos] == MEM_STATIC_ARR_HEAD || dataMemState[pos] == MEM_STATIC_ARR_TAIL;
+}
+
+bool is_dynamic_elem_data(data_addr_ptr pos) {
+	return dataMemState[pos] == MEM_DYN_OBJ || dataMemState[pos] == MEM_DYN_ARR_HEAD || dataMemState[pos] == MEM_DYN_ARR_TAIL;
+}
+
+bool is_arr_head_elem_data(data_addr_ptr pos) {
+	return dataMemState[pos] == MEM_STATIC_ARR_HEAD || dataMemState[pos] == MEM_DYN_ARR_HEAD;
+}
+
+bool is_arr_tail_elem_data(data_addr_ptr pos) {
+	return dataMemState[pos] == MEM_STATIC_ARR_TAIL || dataMemState[pos] == MEM_DYN_ARR_TAIL;
+}
+
+void check_mem_errors_for_delete_data(data_addr_ptr pos, bool isStatic, bool shouldBeAnArray) {
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else if (is_free_elem_data(pos)) {
+		MEM_ERR_DOUBLE_FREE = true;
+	} else if (not is_obj_elem_data(pos) &amp;&amp; not is_arr_head_elem_data(pos)) {
+		// something went completely wrong :(
+		// ex: delete somewhere in the middle of an array
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		if (!isStatic &amp;&amp; is_static_elem_data(pos)) {
+			MEM_ERR_DELETE_ON_STATIC_VAR = true;
+		}
+		if (shouldBeAnArray) {
+			if (not is_arr_head_elem_data(pos)) {
+				MEM_ERR_INVALID_ARR_DELETE = true; // shouldn't have called 'delete []' ?
+			}
+		} else { // delete normal obj
+			if (not is_obj_elem_data(pos)) {
+				MEM_ERR_INVALID_OBJ_DELETE = true;
+			}
+		}
+	}
+}
+
+bool addr_is_in_range_data(int pos) {
+	return pos &gt;= 0 &amp;&amp; pos &lt; DATA_MEMSIZE;
+}
+
+bool addr_is_valid_data(data_addr_ptr pos) {
+	return pos != NULL &amp;&amp; dataMemState[pos] != MEM_FREE;
+}
+
+bool is_arr_elem_data(int head, int index) {
+	int i;
+	if (!addr_is_in_range_data(head + index)) {
+		return false;
+	}
+	if (!is_arr_head_elem_data(head)) {
+		return false;
+	}
+	if (index &lt; 0) { // assuming heap/stack arrays grow leftward
+		return false;
+	}
+	for (i = head + 1; i &lt;= head + index; i++) {
+		if (!is_arr_tail_elem_data(i)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+
+///////////////////
+// DATA - private
+///////////////////
+
+void allocate_and_init_data(int memState, data_addr_ptr pos, data value) {
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		dataMemState[pos] = memState;
+		dataMem[pos] = value;
+        if (memState == MEM_FREE) {
+            DATA_FREE_MEM++;
+        } else {
+            DATA_FREE_MEM--;
+        }
+	}
+}
+
+void allocate_data(int memState, data_addr_ptr pos) {
+	allocate_and_init_data(memState, pos, DEFAULT_DATA_VALUE);
+}
+
+data_addr_ptr find_free_pos_data(int memState) {
+	data_addr_ptr pos = NULL;
+	if (memState == MEM_STATIC_OBJ) { // stack
+		for(pos = 0; pos &lt;= DATA_MEMSIZE - 1; pos++) {
+			if (dataMemState[pos] == MEM_FREE) {
+				return pos;
+			}
+		}
+	} else if (memState == MEM_DYN_OBJ) { // heap
+		for(pos = DATA_MEMSIZE - 1; pos &gt;= 0; pos--) {
+			if (dataMemState[pos] == MEM_FREE) {
+				return pos;
+			}
+		}
+	}
+	return NULL;
+}
+
+data_addr_ptr find_free_pos_and_allocate_and_init_data(int memState, data value) {
+	data_addr_ptr pos;
+	if (DATA_FREE_MEM == 0) {
+		MEM_ERR_NOT_ENOUGH_MEM = true;
+		MEM_ERR_NOT_ENOUGH_MEM_DATA = true;
+		return NULL;
+	}
+	pos = find_free_pos_data(memState);
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		allocate_and_init_data(memState, pos, value);
+	}
+	return pos;
+}
+
+data_addr_ptr find_free_pos_and_allocate_data(int memState) {
+	return find_free_pos_and_allocate_and_init_data(memState, DEFAULT_DATA_VALUE);
+}
+
+void delete_data(data_addr_ptr pos, bool isStatic) {
+	check_mem_errors_for_delete_data(pos, isStatic, false);
+	allocate_and_init_data(MEM_FREE, pos, DEFAULT_DATA_VALUE);
+}
+//////////////////
+// DATA - public
+//////////////////
+
+data_addr_ptr allocate_static_data() {
+	return find_free_pos_and_allocate_and_init_data(MEM_STATIC_OBJ, DEFAULT_DATA_VALUE);
+}
+
+data_addr_ptr allocate_dynamic_data() {
+	return find_free_pos_and_allocate_and_init_data(MEM_DYN_OBJ, DEFAULT_DATA_VALUE);
+}
+
+data_addr_ptr allocate_static_and_init_data(data value) {
+	return find_free_pos_and_allocate_and_init_data(MEM_STATIC_OBJ, value);
+}
+
+data_addr_ptr allocate_dynamic_and_init_data(data value) {
+	return find_free_pos_and_allocate_and_init_data(MEM_DYN_OBJ, value);
+}
+
+void delete_static_data(data_addr_ptr pos) {
+	delete_data(pos, true);
+}
+
+void delete_dynamic_data(data_addr_ptr pos) {
+	delete_data(pos, false);
+}
+
+void empty_stack_data(data_addr_ptr pos) {
+	if (pos != NULL) {
+	    allocate_and_init_data(MEM_FREE, pos, DEFAULT_DATA_VALUE);
+	}
+}
+
+
+/////////////////////////
+// DATA ARRAY - private
+/////////////////////////
+
+data_addr_ptr find_free_pos_arr_data(int memState, int length) {
+	int count = 0;
+	data_addr_ptr pos = -1;
+	int i = 0;
+	if (memState == MEM_STATIC_ARR_HEAD) {
+		for (i = 0; i &lt;= DATA_MEMSIZE - 1; i++) {
+			if (dataMemState[i] == MEM_FREE) {
+				if (count == 0) {
+					pos = i;
+				}
+				count++;
+				if (count == length) {
+					return pos;
+				}
+			} else if (is_static_elem_data(i)) {
+				count = 0;
+				pos = NULL;
+			} else {
+				return NULL;
+			}
+		}
+	} else if (memState == MEM_DYN_ARR_HEAD) {
+		for(i = DATA_MEMSIZE - 1; i &gt;= 0; i--) {
+			if (dataMemState[i] == MEM_FREE) {
+				if (count == 0) {
+					pos = i;
+				}
+				count++;
+				if (count == length) {
+					return pos - length + 1; // return the 'lower' index w.r.t. the memArray; + 1 because count starts at 0
+				}
+			} else if (is_static_elem_data(i)) {
+				count = 0;
+				pos = NULL;
+			} else {
+				return NULL;
+			}
+		}
+	}
+	return NULL;
+}
+
+data_addr_ptr allocate_arr_data(int memState, int length) {
+	int i;
+    data_addr_ptr pos;
+    int tailElemStateType;
+    if (DATA_FREE_MEM &lt; length) {
+		MEM_ERR_NOT_ENOUGH_MEM = true;
+		MEM_ERR_NOT_ENOUGH_MEM_DATA = true;
+		return NULL;
+	}
+	pos = find_free_pos_arr_data(memState, length);
+	if (pos == NULL) {
+		MEM_ERR_FRAGMENTED_MEM = true;
+		MEM_ERR_FRAGMENTED_MEM_DATA = true;
+		return NULL;
+	}
+	if (memState == MEM_STATIC_ARR_HEAD) {
+		tailElemStateType = MEM_STATIC_ARR_TAIL;
+	} else {
+		tailElemStateType = MEM_DYN_ARR_TAIL;
+	}
+	allocate_data(memState, pos); // allocate head
+	for(i = pos + 1; i &lt; (pos + length); i++) {
+		allocate_data(tailElemStateType, i);
+	}
+	return pos;
+}
+
+void delete_arr_data(data_addr_ptr pos, bool isStatic) {
+	int i = pos + 1;
+	check_mem_errors_for_delete_data(pos, isStatic, true);
+	allocate_and_init_data(MEM_FREE, pos, DEFAULT_DATA_VALUE);
+	while(i &lt; DATA_MEMSIZE &amp;&amp; is_arr_tail_elem_data(i)) {
+		allocate_and_init_data(MEM_FREE, pos, DEFAULT_DATA_VALUE);
+		i++;
+	}
+}
+
+////////////////////////
+// DATA ARRAY - public
+////////////////////////
+
+data_addr_ptr allocate_static_arr_data(int length) {
+	return allocate_arr_data(MEM_STATIC_ARR_HEAD, length);
+}
+
+data_addr_ptr allocate_dynamic_arr_data(int length) {
+	return allocate_arr_data(MEM_DYN_ARR_HEAD, length);
+}
+
+void delete_arr_static_data(data_addr_ptr pos) {
+	delete_arr_data(pos, true);
+}
+
+void delete_arr_dynamic_data(data_addr_ptr pos) {
+	delete_arr_data(pos, false);
+}
+
+void empty_stack_arr_data(data_addr_ptr pos) {
+	int i = pos + 1;
+	if (pos != NULL) {
+		allocate_and_init_data(MEM_FREE, pos, DEFAULT_DATA_VALUE);
+		while(i &lt; DATA_MEMSIZE &amp;&amp; is_arr_tail_elem_data(i)) {
+			allocate_and_init_data(MEM_FREE, pos, DEFAULT_DATA_VALUE);
+			i++;
+		}
+	}
+}
+
+void init_arr_elem_data(data_addr_ptr pos, data value) {
+	if (pos == NULL) {
+		MEM_ERR_CORRUPTED_MEM = true;
+	} else {
+		dataMem[pos] = value;
+	}
+}
+
+void prod_ctor(data_addr_ptr &amp;d){
+}
+void cons_ctor(){
+}
+void sc_main(){
+prod_ctor(prod_d);
+cons_ctor();
+}</declaration>
+	<template>
+		<name>Consumer_cons_peq_cb</name>
+		<parameter>int_addr_ptr &amp;cons_socket_nb_transport_bw_param_phase, chan &amp;cons_peq_cb_ctrl, int_addr_ptr &amp;cons_peq_cb_param_phase, data_addr_ptr &amp;cons_socket_nb_transport_bw_param_tran, int &amp;cons_peq_peq_element_param_delay, chan &amp;cons_socket_nb_transport_bw_ctrl, data_addr_ptr &amp;cons_peq_peq_element_param_trans, int_addr_ptr &amp;cons_socket_nb_transport_bw_param_t, chan &amp;cons_peq_notify_ctrl, data_addr_ptr &amp;cons_peq_cb_param_tran, int_addr_ptr &amp;cons_peq_peq_element_param_phase</parameter>
+		<declaration>data_addr_ptr tran = NULL;
+int_addr_ptr phase = NULL;
+int_addr_ptr phase1 = NULL;
+int_addr_ptr delay = NULL;</declaration>
+		<location id="id0" x="302" y="51">
+			<name x="246" y="17">init_location_cons</name>
+		</location>
+		<location id="id1" x="472" y="178">
+			<name x="462" y="144">cons_peq1</name>
+			<urgent/>
+		</location>
+		<location id="id2" x="1548" y="1211">
+			<name x="1572" y="1203">chkptr_3</name>
+			<urgent/>
+		</location>
+		<location id="id3" x="277" y="1164">
+			<name x="289" y="1139">chkptr_4</name>
+			<urgent/>
+		</location>
+		<location id="id4" x="268" y="1071">
+			<name x="280" y="1062">cons_peq7</name>
+			<urgent/>
+		</location>
+		<location id="id5" x="260" y="867">
+			<name x="272" y="867">cons_peq9</name>
+		</location>
+		<location id="id6" x="251" y="603">
+			<name x="241" y="569">cons_peq11</name>
+			<urgent/>
+		</location>
+		<location id="id7" x="523" y="671">
+			<name x="513" y="637">cons_peq5</name>
+			<urgent/>
+		</location>
+		<location id="id8" x="1215" y="240">
+			<name x="1205" y="206">cons_peq2</name>
+			<urgent/>
+		</location>
+		<location id="id9" x="1051" y="304">
+			<name x="1003" y="314">chkptr_5</name>
+			<urgent/>
+		</location>
+		<location id="id10" x="619" y="368">
+			<name x="643" y="360">chkptr_6</name>
+			<urgent/>
+		</location>
+		<location id="id11" x="619" y="432">
+			<urgent/>
+		</location>
+		<location id="id12" x="619" y="577">
+			<name x="637" y="561">cons_peq4</name>
+		</location>
+		<location id="id13" x="816" y="1147">
+			<name x="806" y="1113">cons_peq6</name>
+			<urgent/>
+		</location>
+		<location id="id14" x="260" y="221">
+			<name x="250" y="187">cons_peq12</name>
+			<urgent/>
+		</location>
+		<location id="id15" x="268" y="969">
+			<name x="280" y="952">cons_peq8</name>
+			<urgent/>
+		</location>
+		<location id="id16" x="234" y="705">
+			<name x="136" y="688">cons_peq10</name>
+			<urgent/>
+		</location>
+		<location id="id17" x="619" y="513">
+			<name x="527" y="493">cons_peq3</name>
+			<urgent/>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="1556" y="677">intMem[phase] == 0</label>
+			<label kind="comments" x="1156" y="17">Guard:
+nodeID: 2131, file: prodcons.cpp, line: 164</label>
+			<nail x="1548" y="192"/>
+			<nail x="1548" y="1195"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="guard" x="319" y="1241">addr_is_valid_int(delay)</label>
+			<label kind="assignment" x="319" y="1253">intMem[delay] = 2</label>
+			<label kind="comments" x="1249" y="739">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: 2151, file: prodcons.cpp, line: 165</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-21" y="1067">addr_is_valid_int(phase1)</label>
+			<label kind="assignment" x="-21" y="1080">intMem[phase1] = 1</label>
+			<label kind="comments" x="1249" y="816">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: 2185, file: prodcons.cpp, line: 166</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="268" y="687">cons_peq_notify_ctrl?</label>
+			<nail x="260" y="687"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id8"/>
+			<label kind="guard" x="1342" y="204">!(intMem[phase] == 0)</label>
+			<label kind="comments" x="-105" y="454">Guard:
+nodeID: 2131, file: prodcons.cpp, line: 164</label>
+			<nail x="1334" y="204"/>
+			<nail x="1334" y="236"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="guard" x="1059" y="256">intMem[phase] == 2</label>
+			<label kind="comments" x="-59" y="493">Guard:
+nodeID: 2372, file: prodcons.cpp, line: 174</label>
+			<nail x="1051" y="256"/>
+			<nail x="1051" y="288"/>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="627" y="320">addr_is_valid_int(delay)</label>
+			<label kind="assignment" x="627" y="333">intMem[delay] = 2</label>
+			<label kind="comments" x="-59" y="374">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: 2392, file: prodcons.cpp, line: 175</label>
+			<nail x="619" y="320"/>
+			<nail x="619" y="352"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="627" y="384">addr_is_valid_int(phase1)</label>
+			<label kind="assignment" x="627" y="397">intMem[phase1] = 2</label>
+			<label kind="comments" x="1156" y="119">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: 2426, file: prodcons.cpp, line: 176</label>
+			<nail x="619" y="384"/>
+			<nail x="619" y="416"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id13"/>
+			<label kind="guard" x="1212" y="677">!(intMem[phase] == 2)</label>
+			<label kind="comments" x="1156" y="68">Guard:
+nodeID: 2372, file: prodcons.cpp, line: 174</label>
+			<nail x="1204" y="256"/>
+			<nail x="1204" y="1131"/>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id7"/>
+			<label kind="guard" x="436" y="893">intMem[phase] == 3</label>
+			<label kind="comments" x="1266" y="484">Guard:
+nodeID: 2527, file: prodcons.cpp, line: 181</label>
+			<nail x="428" y="1131"/>
+			<nail x="428" y="687"/>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id7"/>
+			<label kind="guard" x="589" y="893">!(intMem[phase] == 3)</label>
+			<label kind="comments" x="1266" y="535">Guard:
+nodeID: 2527, file: prodcons.cpp, line: 181</label>
+			<nail x="581" y="1131"/>
+			<nail x="581" y="687"/>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="132" y="68">cons_peq_cb_ctrl!</label>
+			<nail x="260" y="51"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="387" y="9">cons_peq_cb_ctrl?</label>
+			<label kind="assignment" x="379" y="26">tran = cons_peq_cb_param_tran,
+phase = cons_peq_cb_param_phase,
+delay = allocate_static_int(),
+phase1 = allocate_static_int()</label>
+			<label kind="comments" x="-42" y="102">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="302" y="178"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id15"/>
+			<label kind="assignment" x="-73" y="983">cons_socket_nb_transport_bw_param_tran = tran,
+cons_socket_nb_transport_bw_param_phase = phase1,
+cons_socket_nb_transport_bw_param_t = delay</label>
+			<label kind="comments" x="1258" y="586">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="141" y="909">cons_socket_nb_transport_bw_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-80" y="735">cons_socket_nb_transport_bw_ctrl?</label>
+			<label kind="assignment" x="-80" y="748">cons_socket_nb_transport_bw_param_tran = NULL,
+cons_socket_nb_transport_bw_param_phase = NULL,
+cons_socket_nb_transport_bw_param_t = NULL,
+cons_peq_peq_element_param_delay = 5,
+cons_peq_peq_element_param_trans = tran,
+cons_peq_peq_element_param_phase = 2</label>
+			<label kind="comments" x="1266" y="331">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="115" y="646">cons_peq_notify_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id17"/>
+			<label kind="assignment" x="627" y="448">cons_socket_nb_transport_bw_param_tran = tran,
+cons_socket_nb_transport_bw_param_phase = phase1,
+cons_socket_nb_transport_bw_param_t = delay</label>
+			<label kind="comments" x="-51" y="289">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="619" y="448"/>
+			<nail x="619" y="497"/>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="627" y="529">cons_socket_nb_transport_bw_ctrl!</label>
+			<nail x="619" y="529"/>
+			<nail x="619" y="561"/>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="627" y="593">cons_socket_nb_transport_bw_ctrl?</label>
+			<label kind="assignment" x="627" y="606">cons_socket_nb_transport_bw_param_tran = NULL,
+cons_socket_nb_transport_bw_param_phase = NULL,
+cons_socket_nb_transport_bw_param_t = NULL</label>
+			<label kind="comments" x="-59" y="544">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="619" y="593"/>
+			<nail x="619" y="655"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id14"/>
+			<label kind="assignment" x="436" y="422">empty_stack_int(delay),
+empty_stack_int(phase1)</label>
+			<label kind="comments" x="-51" y="221">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="428" y="655"/>
+			<nail x="428" y="224"/>
+		</transition>
+	</template>
+	<template>
+		<name>Consumer_nb_transport_fw</name>
+		<parameter>int_addr_ptr &amp;nb_transport_fw_param_phase, chan &amp;nb_transport_fw_ctrl, int &amp;cons_peq_peq_element_param_delay, int_addr_ptr &amp;nb_transport_fw_param_t, data_addr_ptr &amp;cons_peq_peq_element_param_trans, tlm_sync_enum &amp;nb_transport_fw_return, data_addr_ptr &amp;nb_transport_fw_param_tran, chan &amp;cons_peq_notify_ctrl, int_addr_ptr &amp;cons_peq_peq_element_param_phase</parameter>
+		<declaration>data_addr_ptr tran = NULL;
+int_addr_ptr phase = NULL;
+int_addr_ptr t = NULL;</declaration>
+		<location id="id18" x="161" y="34">
+			<name x="153" y="1">init_location_fw</name>
+		</location>
+		<location id="id19" x="161" y="391">
+			<name x="178" y="374">cons_fw2</name>
+			<urgent/>
+		</location>
+		<location id="id20" x="161" y="331">
+			<name x="178" y="314">cons_fw1</name>
+			<urgent/>
+		</location>
+		<location id="id21" x="0" y="187">
+			<name x="-76" y="178">cons_fw3</name>
+			<urgent/>
+		</location>
+		<init ref="id18"/>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="-110" y="229">cons_peq_notify_ctrl?</label>
+			<label kind="assignment" x="-153" y="246">nb_transport_fw_return = TLM_ACCEPTED</label>
+			<label kind="comments" x="-153" y="331">Update:
+nodeID: 2915, file: prodcons.cpp, line: 218</label>
+			<nail x="0" y="391"/>
+			<nail x="0" y="203"/>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id20"/>
+			<label kind="synchronisation" x="170" y="42">nb_transport_fw_ctrl?</label>
+			<label kind="assignment" x="170" y="59">tran = nb_transport_fw_param_tran,
+phase = nb_transport_fw_param_phase,
+t = nb_transport_fw_param_t,
+cons_peq_peq_element_param_delay = t,
+cons_peq_peq_element_param_trans = tran,
+cons_peq_peq_element_param_phase = phase</label>
+			<label kind="comments" x="178" y="178">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="161" y="76"/>
+			<nail x="161" y="139"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id19"/>
+			<label kind="synchronisation" x="161" y="348">cons_peq_notify_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id18"/>
+			<label kind="synchronisation" x="-51" y="76">nb_transport_fw_ctrl!</label>
+			<nail x="0" y="171"/>
+			<nail x="0" y="32"/>
+		</transition>
+	</template>
+	<template>
+		<name>InitializerTemplate</name>
+		<location id="id22" x="0" y="16">
+			<name x="-10" y="-18">init_temp1</name>
+			<urgent/>
+		</location>
+		<location id="id23" x="0" y="80">
+			<name x="25" y="68">init_temp2</name>
+			<committed/>
+		</location>
+		<location id="id24" x="0" y="144">
+			<name x="17" y="127">init_temp3</name>
+		</location>
+		<init ref="id22"/>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id23"/>
+			<label kind="synchronisation" x="8" y="32">deltadelay?</label>
+			<nail x="0" y="32"/>
+			<nail x="0" y="64"/>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="8" y="96">initdone!</label>
+			<nail x="0" y="96"/>
+			<nail x="0" y="128"/>
+		</transition>
+	</template>
+	<template>
+		<name>Producer_initiator_main</name>
+		<parameter>data_addr_ptr &amp;prod_socket_nb_transport_fw_param_tran, int_addr_ptr &amp;prod_socket_nb_transport_fw_param_t, data_addr_ptr &amp;d, chan &amp;initiator_main_ctrl, int &amp;timeoutevent_notify_t, int_addr_ptr &amp;prod_socket_nb_transport_fw_param_phase, tlm_sync_enum &amp;prod_socket_nb_transport_fw_return, broadcast chan &amp;timeoutevent_wait, chan &amp;timeoutevent_notify, chan &amp;prod_socket_nb_transport_fw_ctrl</parameter>
+		<declaration>tlm_sync_enum se;
+int i;
+int j;
+int_addr_ptr phase = NULL;
+int_addr_ptr transport_delay = NULL;
+int loop_delay;</declaration>
+		<location id="id25" x="144" y="16">
+			<name x="168" y="8">init_location_prod_main</name>
+		</location>
+		<location id="id26" x="757" y="140">
+			<name x="747" y="106">prod_main1</name>
+			<urgent/>
+		</location>
+		<location id="id27" x="660" y="204">
+			<name x="650" y="170">prod_main2</name>
+			<urgent/>
+		</location>
+		<location id="id28" x="1200" y="268">
+			<name x="1232" y="255">prod_main3</name>
+			<urgent/>
+		</location>
+		<location id="id29" x="918" y="332">
+			<name x="908" y="298">prod_main4</name>
+			<urgent/>
+		</location>
+		<location id="id30" x="730" y="396">
+			<name x="620" y="382">prod_main5</name>
+			<urgent/>
+		</location>
+		<location id="id31" x="429" y="1081">
+			<name x="419" y="1047">prod_main6</name>
+			<urgent/>
+		</location>
+		<location id="id32" x="144" y="428">
+			<name x="59" y="416">chkptr_9</name>
+			<urgent/>
+		</location>
+		<location id="id33" x="144" y="492">
+			<name x="34" y="484">prod_main13</name>
+			<urgent/>
+		</location>
+		<location id="id34" x="144" y="637">
+			<name x="42" y="646">prod_main11</name>
+		</location>
+		<location id="id35" x="144" y="825">
+			<name x="42" y="816">prod_main9</name>
+			<committed/>
+		</location>
+		<location id="id36" x="144" y="1017">
+			<name x="42" y="1003">prod_main7</name>
+			<urgent/>
+		</location>
+		<location id="id37" x="144" y="953">
+		</location>
+		<location id="id38" x="144" y="1145">
+			<name x="42" y="1139">prod_main14</name>
+			<urgent/>
+		</location>
+		<location id="id39" x="144" y="1273">
+			<name x="42" y="1258">prod_main16</name>
+			<committed/>
+		</location>
+		<location id="id40" x="144" y="1465">
+			<name x="34" y="1453">prod_main19</name>
+			<urgent/>
+		</location>
+		<location id="id41" x="144" y="1401">
+			<name x="34" y="1394">prod_main18</name>
+		</location>
+		<location id="id42" x="144" y="1623">
+			<name x="25" y="1615">prod_main21</name>
+		</location>
+		<location id="id43" x="160" y="1732">
+			<name x="42" y="1717">prod_main22</name>
+			<urgent/>
+		</location>
+		<location id="id44" x="160" y="1796">
+			<name x="42" y="1785">prod_main23</name>
+			<urgent/>
+		</location>
+		<location id="id45" x="144" y="1924">
+			<name x="34" y="1912">prod_main25</name>
+			<committed/>
+		</location>
+		<location id="id46" x="660" y="2116">
+			<name x="650" y="2082">prod_main28</name>
+			<urgent/>
+		</location>
+		<location id="id47" x="144" y="2052">
+			<name x="25" y="2040">prod_main27</name>
+		</location>
+		<location id="id48" x="757" y="2148">
+			<name x="747" y="2114">prod_main30</name>
+			<urgent/>
+		</location>
+		<location id="id49" x="72" y="2212">
+			<name x="42" y="2167">prod_main29</name>
+			<urgent/>
+		</location>
+		<location id="id50" x="144" y="573">
+			<name x="34" y="561">prod_main12</name>
+			<urgent/>
+		</location>
+		<location id="id51" x="144" y="761">
+			<name x="34" y="748">prod_main10</name>
+			<urgent/>
+		</location>
+		<location id="id52" x="144" y="889">
+			<name x="51" y="867">prod_main8</name>
+			<committed/>
+		</location>
+		<location id="id53" x="144" y="1209">
+			<name x="34" y="1198">prod_main15</name>
+			<urgent/>
+		</location>
+		<location id="id54" x="144" y="1337">
+			<name x="34" y="1326">prod_main17</name>
+			<committed/>
+		</location>
+		<location id="id55" x="144" y="1559">
+			<name x="34" y="1547">prod_main20</name>
+			<urgent/>
+		</location>
+		<location id="id56" x="144" y="1861">
+			<name x="34" y="1853">prod_main24</name>
+			<urgent/>
+		</location>
+		<location id="id57" x="144" y="1988">
+			<name x="34" y="1980">prod_main26</name>
+			<committed/>
+		</location>
+		<init ref="id25"/>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id26"/>
+			<label kind="synchronisation" x="152" y="32">initiator_main_ctrl?</label>
+			<label kind="assignment" x="152" y="45">transport_delay = allocate_static_and_init_int(5),
+loop_delay = 20,
+se = 20,
+i = 0,
+j = 0</label>
+			<label kind="comments" x="348" y="0">Update:
+nodeID: 914, file: prodcons.cpp, line: 96,
+nodeID: 956, file: prodcons.cpp, line: 97,
+nodeID: 956, file: prodcons.cpp, line: 97,
+nodeID: 956, file: prodcons.cpp, line: 97,
+nodeID: 956, file: prodcons.cpp, line: 97</label>
+			<nail x="144" y="32"/>
+			<nail x="144" y="124"/>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id27"/>
+			<label kind="guard" x="221" y="161">true</label>
+			<label kind="comments" x="280" y="229">Guard:
+nodeID: 1050, file: prodcons.cpp, line: 101</label>
+			<nail x="255" y="161"/>
+			<nail x="255" y="187"/>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id28"/>
+			<label kind="assignment" x="1185" y="220">i = 1</label>
+			<label kind="comments" x="870" y="266">Update:
+nodeID: 1068, file: prodcons.cpp, line: 102</label>
+			<nail x="1177" y="220"/>
+			<nail x="1177" y="252"/>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id29"/>
+			<label kind="guard" x="1130" y="284">i &lt;= 3</label>
+			<label kind="comments" x="999" y="330">Guard:
+nodeID: 1084, file: prodcons.cpp, line: 102</label>
+			<nail x="1122" y="284"/>
+			<nail x="1122" y="316"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id30"/>
+			<label kind="guard" x="722" y="348">1</label>
+			<label kind="comments" x="764" y="394">Guard:
+nodeID: 1116, file: prodcons.cpp, line: 105</label>
+			<nail x="714" y="348"/>
+			<nail x="714" y="380"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id30"/>
+			<label kind="guard" x="754" y="348">!(1)</label>
+			<label kind="comments" x="764" y="394">Guard:
+nodeID: 1116, file: prodcons.cpp, line: 105</label>
+			<nail x="746" y="348"/>
+			<nail x="746" y="380"/>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id31"/>
+			<label kind="assignment" x="722" y="721">phase = allocate_static_and_init_int(0),
+j = 1</label>
+			<label kind="comments" x="519" y="768">Update:
+nodeID: 1160, file: prodcons.cpp, line: 106,
+nodeID: 1188, file: prodcons.cpp, line: 108</label>
+			<nail x="714" y="412"/>
+			<nail x="714" y="1065"/>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id32"/>
+			<label kind="guard" x="622" y="738">j &lt; 4</label>
+			<label kind="comments" x="226" y="784">Guard:
+nodeID: 1204, file: prodcons.cpp, line: 108</label>
+			<nail x="614" y="1065"/>
+			<nail x="614" y="444"/>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id33"/>
+			<label kind="guard" x="152" y="444">addr_is_valid_data(d)</label>
+			<label kind="assignment" x="152" y="457">dataMem[d].val = i + j</label>
+			<label kind="comments" x="289" y="450">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: 1258, file: prodcons.cpp, line: 110</label>
+			<nail x="144" y="444"/>
+			<nail x="144" y="476"/>
+		</transition>
+		<transition>
+			<source ref="id36"/>
+			<target ref="id31"/>
+			<label kind="synchronisation" x="152" y="1033">activate?</label>
+			<label kind="assignment" x="152" y="1046">j = j + 1</label>
+			<label kind="comments" x="238" y="1096">Update:
+nodeID: 1224, file: prodcons.cpp, line: 108</label>
+			<nail x="144" y="1033"/>
+			<nail x="144" y="1065"/>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id38"/>
+			<label kind="guard" x="152" y="1097">!(j &lt; 4)</label>
+			<label kind="comments" x="226" y="1143">Guard:
+nodeID: 1204, file: prodcons.cpp, line: 108</label>
+			<nail x="144" y="1097"/>
+			<nail x="144" y="1129"/>
+		</transition>
+		<transition>
+			<source ref="id40"/>
+			<target ref="id55"/>
+			<label kind="synchronisation" x="152" y="1481">activate?</label>
+			<label kind="assignment" x="153" y="1496">prod_socket_nb_transport_fw_param_tran = d,
+prod_socket_nb_transport_fw_param_phase = phase,
+prod_socket_nb_transport_fw_param_t = transport_delay</label>
+			<label kind="comments" x="450" y="1555">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="1481"/>
+			<nail x="144" y="1543"/>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id44"/>
+			<label kind="guard" x="152" y="1748">1</label>
+			<label kind="comments" x="391" y="1912">Guard:
+nodeID: 1445, file: prodcons.cpp, line: 119</label>
+			<nail x="144" y="1748"/>
+			<nail x="144" y="1780"/>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id44"/>
+			<label kind="guard" x="184" y="1748">!(1)</label>
+			<label kind="comments" x="382" y="1853">Guard:
+nodeID: 1445, file: prodcons.cpp, line: 119</label>
+			<nail x="176" y="1748"/>
+			<nail x="176" y="1780"/>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id28"/>
+			<label kind="synchronisation" x="1185" y="1168">activate?</label>
+			<label kind="assignment" x="1185" y="1181">empty_stack_int(phase),
+i=i+1</label>
+			<label kind="comments" x="870" y="1222">Update:
+nodeID: -1, file: , line: -1,
+nodeID: 1102, file: prodcons.cpp, line: 102</label>
+			<nail x="1177" y="2100"/>
+			<nail x="1177" y="284"/>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id26"/>
+			<label kind="guard" x="1231" y="188">!(i &lt;= 3)</label>
+			<label kind="comments" x="867" y="153">Guard:
+nodeID: 1084, file: prodcons.cpp, line: 102</label>
+			<nail x="1223" y="252"/>
+			<nail x="1223" y="156"/>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id48"/>
+			<label kind="guard" x="1379" y="1128">!(true)</label>
+			<label kind="comments" x="697" y="1174">Guard:
+nodeID: 1050, file: prodcons.cpp, line: 101</label>
+			<nail x="1371" y="156"/>
+			<nail x="1371" y="2132"/>
+		</transition>
+		<transition>
+			<source ref="id48"/>
+			<target ref="id49"/>
+			<label kind="assignment" x="152" y="2164">empty_stack_int(transport_delay)</label>
+			<label kind="comments" x="354" y="2210">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="2164"/>
+			<nail x="144" y="2196"/>
+		</transition>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id25"/>
+			<label kind="synchronisation" x="8" y="1098">initiator_main_ctrl!</label>
+			<nail x="0" y="2196"/>
+			<nail x="0" y="32"/>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id50"/>
+			<label kind="assignment" x="153" y="518">prod_socket_nb_transport_fw_param_tran = d,
+prod_socket_nb_transport_fw_param_phase = phase,
+prod_socket_nb_transport_fw_param_t = transport_delay</label>
+			<label kind="comments" x="425" y="578">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="508"/>
+			<nail x="144" y="557"/>
+		</transition>
+		<transition>
+			<source ref="id50"/>
+			<target ref="id34"/>
+			<label kind="synchronisation" x="152" y="589">prod_socket_nb_transport_fw_ctrl!</label>
+			<nail x="144" y="589"/>
+			<nail x="144" y="621"/>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id51"/>
+			<label kind="synchronisation" x="152" y="653">prod_socket_nb_transport_fw_ctrl?</label>
+			<label kind="assignment" x="153" y="663">prod_socket_nb_transport_fw_param_tran = NULL,
+prod_socket_nb_transport_fw_param_phase = NULL,
+prod_socket_nb_transport_fw_param_t = NULL,
+se = prod_socket_nb_transport_fw_return,
+readyprocs=readyprocs-1</label>
+			<label kind="comments" x="331" y="841">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="653"/>
+			<nail x="144" y="745"/>
+		</transition>
+		<transition>
+			<source ref="id51"/>
+			<target ref="id35"/>
+			<label kind="synchronisation" x="110" y="782">deactivate!</label>
+			<nail x="144" y="777"/>
+			<nail x="144" y="809"/>
+		</transition>
+		<transition>
+			<source ref="id35"/>
+			<target ref="id52"/>
+			<label kind="assignment" x="152" y="841">timeoutevent_notify_t = 1</label>
+			<label kind="comments" x="76" y="892">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="841"/>
+			<nail x="144" y="873"/>
+		</transition>
+		<transition>
+			<source ref="id52"/>
+			<target ref="id37"/>
+			<label kind="synchronisation" x="153" y="909">timeoutevent_notify!</label>
+			<nail x="144" y="905"/>
+			<nail x="144" y="937"/>
+		</transition>
+		<transition>
+			<source ref="id37"/>
+			<target ref="id36"/>
+			<label kind="synchronisation" x="153" y="969">timeoutevent_wait?</label>
+			<label kind="assignment" x="152" y="982">readyprocs=readyprocs+1</label>
+			<label kind="comments" x="76" y="1028">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="969"/>
+			<nail x="144" y="1001"/>
+		</transition>
+		<transition>
+			<source ref="id38"/>
+			<target ref="id53"/>
+			<label kind="assignment" x="152" y="1161">readyprocs=readyprocs-1</label>
+			<label kind="comments" x="238" y="1215">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="1161"/>
+			<nail x="144" y="1193"/>
+		</transition>
+		<transition>
+			<source ref="id53"/>
+			<target ref="id39"/>
+			<label kind="synchronisation" x="152" y="1225">deactivate!</label>
+			<nail x="144" y="1225"/>
+			<nail x="144" y="1257"/>
+		</transition>
+		<transition>
+			<source ref="id39"/>
+			<target ref="id54"/>
+			<label kind="assignment" x="152" y="1289">timeoutevent_notify_t = 1</label>
+			<label kind="comments" x="323" y="1343">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="1289"/>
+			<nail x="144" y="1321"/>
+		</transition>
+		<transition>
+			<source ref="id54"/>
+			<target ref="id41"/>
+			<label kind="synchronisation" x="152" y="1353">timeoutevent_notify!</label>
+			<nail x="144" y="1353"/>
+			<nail x="144" y="1385"/>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id40"/>
+			<label kind="synchronisation" x="152" y="1417">timeoutevent_wait?</label>
+			<label kind="assignment" x="152" y="1430">readyprocs=readyprocs+1</label>
+			<label kind="comments" x="263" y="1453">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="1417"/>
+			<nail x="144" y="1449"/>
+		</transition>
+		<transition>
+			<source ref="id55"/>
+			<target ref="id42"/>
+			<label kind="synchronisation" x="152" y="1575">prod_socket_nb_transport_fw_ctrl!</label>
+			<nail x="144" y="1575"/>
+			<nail x="144" y="1607"/>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id43"/>
+			<label kind="synchronisation" x="152" y="1639">prod_socket_nb_transport_fw_ctrl?</label>
+			<label kind="assignment" x="152" y="1652">prod_socket_nb_transport_fw_param_tran = NULL,
+prod_socket_nb_transport_fw_param_phase = NULL,
+prod_socket_nb_transport_fw_param_t = NULL,
+se = prod_socket_nb_transport_fw_return</label>
+			<label kind="comments" x="493" y="1700">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="1639"/>
+			<nail x="144" y="1716"/>
+		</transition>
+		<transition>
+			<source ref="id44"/>
+			<target ref="id56"/>
+			<label kind="assignment" x="162" y="1807">readyprocs=readyprocs-1</label>
+			<label kind="comments" x="255" y="1793">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="154" y="1807"/>
+			<nail x="154" y="1839"/>
+		</transition>
+		<transition>
+			<source ref="id56"/>
+			<target ref="id45"/>
+			<label kind="synchronisation" x="152" y="1876">deactivate!</label>
+			<nail x="144" y="1876"/>
+			<nail x="144" y="1908"/>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id57"/>
+			<label kind="assignment" x="152" y="1940">timeoutevent_notify_t = 50</label>
+			<label kind="comments" x="323" y="1997">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="1940"/>
+			<nail x="144" y="1972"/>
+		</transition>
+		<transition>
+			<source ref="id57"/>
+			<target ref="id47"/>
+			<label kind="synchronisation" x="144" y="2006">timeoutevent_notify!</label>
+			<nail x="144" y="2004"/>
+			<nail x="144" y="2036"/>
+		</transition>
+		<transition>
+			<source ref="id47"/>
+			<target ref="id46"/>
+			<label kind="synchronisation" x="152" y="2068">timeoutevent_wait?</label>
+			<label kind="assignment" x="152" y="2081">readyprocs=readyprocs+1</label>
+			<label kind="comments" x="342" y="2114">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="2068"/>
+			<nail x="144" y="2100"/>
+		</transition>
+	</template>
+	<template>
+		<name>Producer_nb_transport_bw</name>
+		<parameter>int &amp;prod_peq_peq_element_param_delay, chan &amp;nb_transport_bw_ctrl, data_addr_ptr &amp;prod_peq_peq_element_param_trans, int_addr_ptr &amp;prod_peq_peq_element_param_phase, int_addr_ptr &amp;nb_transport_bw_param_t, int_addr_ptr &amp;nb_transport_bw_param_phase, tlm_sync_enum &amp;nb_transport_bw_return, data_addr_ptr &amp;nb_transport_bw_param_tran, chan &amp;prod_peq_notify_ctrl</parameter>
+		<declaration>data_addr_ptr tran = NULL;
+int_addr_ptr phase = NULL;
+int_addr_ptr t = NULL;</declaration>
+		<location id="id58" x="166" y="16">
+			<name x="190" y="8">init_location_bw</name>
+		</location>
+		<location id="id59" x="161" y="433">
+			<name x="178" y="416">prod_bw2</name>
+			<urgent/>
+		</location>
+		<location id="id60" x="161" y="357">
+			<name x="187" y="340">prod_bw1</name>
+			<urgent/>
+		</location>
+		<location id="id61" x="0" y="187">
+			<name x="25" y="178">prod_bw3</name>
+			<urgent/>
+		</location>
+		<init ref="id58"/>
+		<transition>
+			<source ref="id59"/>
+			<target ref="id61"/>
+			<label kind="synchronisation" x="-153" y="306">prod_peq_notify_ctrl?</label>
+			<label kind="assignment" x="-170" y="331">nb_transport_bw_return = TLM_ACCEPTED</label>
+			<label kind="comments" x="-161" y="374">Update:
+nodeID: 1904, file: prodcons.cpp, line: 144</label>
+			<nail x="0" y="433"/>
+			<nail x="0" y="203"/>
+		</transition>
+		<transition>
+			<source ref="id58"/>
+			<target ref="id60"/>
+			<label kind="synchronisation" x="174" y="32">nb_transport_bw_ctrl?</label>
+			<label kind="assignment" x="174" y="45">tran = nb_transport_bw_param_tran,
+phase = nb_transport_bw_param_phase,
+t = nb_transport_bw_param_t,
+prod_peq_peq_element_param_delay = t,
+prod_peq_peq_element_param_trans = tran,
+prod_peq_peq_element_param_phase = phase</label>
+			<label kind="comments" x="178" y="178">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="166" y="32"/>
+			<nail x="166" y="139"/>
+		</transition>
+		<transition>
+			<source ref="id60"/>
+			<target ref="id59"/>
+			<label kind="synchronisation" x="178" y="374">prod_peq_notify_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id61"/>
+			<target ref="id58"/>
+			<label kind="synchronisation" x="8" y="85">nb_transport_bw_ctrl!</label>
+			<nail x="0" y="171"/>
+			<nail x="0" y="32"/>
+		</transition>
+	</template>
+	<template>
+		<name>Producer_prod_peq_cb</name>
+		<parameter>int &amp;prod_peq_peq_element_param_delay, data_addr_ptr &amp;prod_socket_nb_transport_fw_param_tran, chan &amp;prod_peq_cb_ctrl, int_addr_ptr &amp;prod_socket_nb_transport_fw_param_t, int_addr_ptr &amp;prod_peq_cb_param_phase, data_addr_ptr &amp;prod_peq_peq_element_param_trans, int_addr_ptr &amp;prod_peq_peq_element_param_phase, data_addr_ptr &amp;prod_peq_cb_param_tran, int_addr_ptr &amp;prod_socket_nb_transport_fw_param_phase, chan &amp;prod_peq_notify_ctrl, chan &amp;prod_socket_nb_transport_fw_ctrl</parameter>
+		<declaration>data_addr_ptr tran = NULL;
+int_addr_ptr phase = NULL;
+int_addr_ptr phase1 = NULL;
+int_addr_ptr delay = NULL;</declaration>
+		<location id="id62" x="144" y="16">
+			<name x="168" y="8">init_location_prod_peq</name>
+		</location>
+		<location id="id63" x="796" y="125">
+			<name x="786" y="91">prod_peq1</name>
+			<urgent/>
+		</location>
+		<location id="id64" x="724" y="716">
+			<name x="714" y="682">prod_peq7</name>
+			<urgent/>
+		</location>
+		<location id="id65" x="983" y="189">
+			<name x="1011" y="178">prod_peq2</name>
+			<urgent/>
+		</location>
+		<location id="id66" x="522" y="253">
+			<name x="512" y="219">prod_peq10</name>
+			<urgent/>
+		</location>
+		<location id="id67" x="191" y="558">
+			<name x="181" y="524">prod_peq8</name>
+			<urgent/>
+		</location>
+		<location id="id68" x="770" y="285">
+			<name x="760" y="251">prod_peq3</name>
+			<urgent/>
+		</location>
+		<location id="id69" x="854" y="349">
+			<name x="878" y="341">prod_peq_chkptr_7</name>
+			<urgent/>
+		</location>
+		<location id="id70" x="854" y="413">
+			<name x="878" y="405">prod_peq_chkptr_8</name>
+			<urgent/>
+		</location>
+		<location id="id71" x="854" y="477">
+			<name x="765" y="459">prod_peq4</name>
+			<urgent/>
+		</location>
+		<location id="id72" x="854" y="622">
+			<name x="765" y="603">prod_peq6</name>
+		</location>
+		<location id="id73" x="0" y="157">
+			<name x="-10" y="123">prod_peq11</name>
+			<urgent/>
+		</location>
+		<location id="id74" x="274" y="477">
+			<name x="264" y="443">prod_peq9</name>
+			<urgent/>
+		</location>
+		<location id="id75" x="854" y="558">
+			<name x="765" y="535">prod_peq5</name>
+			<urgent/>
+		</location>
+		<init ref="id62"/>
+		<transition>
+			<source ref="id63"/>
+			<target ref="id64"/>
+			<label kind="guard" x="510" y="595">intMem[phase] == 1</label>
+			<label kind="comments" x="408" y="629">Guard:
+nodeID: 421, file: prodcons.cpp, line: 67</label>
+			<nail x="603" y="161"/>
+			<nail x="612" y="688"/>
+		</transition>
+		<transition>
+			<source ref="id63"/>
+			<target ref="id65"/>
+			<label kind="guard" x="943" y="76">!(intMem[phase] == 1)</label>
+			<label kind="comments" x="867" y="102">Guard:
+nodeID: 421, file: prodcons.cpp, line: 67</label>
+			<nail x="909" y="153"/>
+			<nail x="943" y="161"/>
+		</transition>
+		<transition>
+			<source ref="id65"/>
+			<target ref="id66"/>
+			<label kind="guard" x="694" y="205">intMem[phase] == 2</label>
+			<label kind="comments" x="697" y="238">Guard:
+nodeID: 483, file: prodcons.cpp, line: 70</label>
+			<nail x="686" y="205"/>
+			<nail x="686" y="237"/>
+		</transition>
+		<transition>
+			<source ref="id67"/>
+			<target ref="id64"/>
+			<label kind="synchronisation" x="199" y="621">prod_peq_notify_ctrl?</label>
+			<nail x="191" y="574"/>
+			<nail x="191" y="700"/>
+		</transition>
+		<transition>
+			<source ref="id65"/>
+			<target ref="id68"/>
+			<label kind="guard" x="847" y="221">!(intMem[phase] == 2)</label>
+			<label kind="comments" x="816" y="267">Guard:
+nodeID: 483, file: prodcons.cpp, line: 70</label>
+			<nail x="839" y="205"/>
+			<nail x="839" y="269"/>
+		</transition>
+		<transition>
+			<source ref="id68"/>
+			<target ref="id69"/>
+			<label kind="guard" x="862" y="301">intMem[phase] == 3</label>
+			<label kind="comments" x="752" y="347">Guard:
+nodeID: 637, file: prodcons.cpp, line: 75</label>
+			<nail x="854" y="301"/>
+			<nail x="854" y="333"/>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id70"/>
+			<label kind="guard" x="862" y="365">addr_is_valid_int(delay)</label>
+			<label kind="assignment" x="862" y="378">intMem[delay] = 1</label>
+			<label kind="comments" x="1156" y="374">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: 657, file: prodcons.cpp, line: 76</label>
+			<nail x="854" y="365"/>
+			<nail x="854" y="397"/>
+		</transition>
+		<transition>
+			<source ref="id70"/>
+			<target ref="id71"/>
+			<label kind="guard" x="867" y="416">addr_is_valid_int(phase1)</label>
+			<label kind="assignment" x="862" y="442">intMem[phase1] = 3</label>
+			<label kind="comments" x="1130" y="552">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: 691, file: prodcons.cpp, line: 77</label>
+			<nail x="854" y="429"/>
+			<nail x="854" y="461"/>
+		</transition>
+		<transition>
+			<source ref="id68"/>
+			<target ref="id64"/>
+			<label kind="guard" x="694" y="484">!(intMem[phase] == 3)</label>
+			<label kind="comments" x="680" y="493">Guard:
+nodeID: 637, file: prodcons.cpp, line: 75</label>
+			<nail x="686" y="301"/>
+			<nail x="686" y="700"/>
+		</transition>
+		<transition>
+			<source ref="id73"/>
+			<target ref="id62"/>
+			<label kind="synchronisation" x="8" y="70">prod_peq_cb_ctrl!</label>
+			<nail x="0" y="141"/>
+			<nail x="0" y="32"/>
+		</transition>
+		<transition>
+			<source ref="id62"/>
+			<target ref="id63"/>
+			<label kind="synchronisation" x="152" y="32">prod_peq_cb_ctrl?</label>
+			<label kind="assignment" x="152" y="45">tran = prod_peq_cb_param_tran,
+phase = prod_peq_cb_param_phase,
+delay = allocate_static_int(),
+phase1 = allocate_static_int()</label>
+			<label kind="comments" x="410" y="100">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="144" y="32"/>
+			<nail x="144" y="109"/>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id74"/>
+			<label kind="assignment" x="366" y="340">prod_peq_peq_element_param_delay = 5,
+prod_peq_peq_element_param_trans = tran,
+prod_peq_peq_element_param_phase = 3</label>
+			<label kind="comments" x="338" y="395">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="358" y="269"/>
+			<nail x="358" y="461"/>
+		</transition>
+		<transition>
+			<source ref="id74"/>
+			<target ref="id67"/>
+			<label kind="synchronisation" x="199" y="501">prod_peq_notify_ctrl!</label>
+			<nail x="191" y="493"/>
+			<nail x="191" y="542"/>
+		</transition>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id75"/>
+			<label kind="assignment" x="875" y="459">prod_socket_nb_transport_fw_param_tran = tran,
+prod_socket_nb_transport_fw_param_phase = phase1,
+prod_socket_nb_transport_fw_param_t = delay</label>
+			<label kind="comments" x="875" y="544">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="854" y="493"/>
+			<nail x="854" y="542"/>
+		</transition>
+		<transition>
+			<source ref="id75"/>
+			<target ref="id72"/>
+			<label kind="synchronisation" x="884" y="561">prod_socket_nb_transport_fw_ctrl!</label>
+			<nail x="854" y="574"/>
+			<nail x="854" y="606"/>
+		</transition>
+		<transition>
+			<source ref="id72"/>
+			<target ref="id64"/>
+			<label kind="synchronisation" x="862" y="638">prod_socket_nb_transport_fw_ctrl?</label>
+			<label kind="assignment" x="862" y="651">prod_socket_nb_transport_fw_param_tran = NULL,
+prod_socket_nb_transport_fw_param_phase = NULL,
+prod_socket_nb_transport_fw_param_t = NULL</label>
+			<label kind="comments" x="729" y="699">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="854" y="638"/>
+			<nail x="854" y="700"/>
+		</transition>
+		<transition>
+			<source ref="id64"/>
+			<target ref="id73"/>
+			<label kind="assignment" x="8" y="419">empty_stack_int(delay),
+empty_stack_int(phase1)</label>
+			<label kind="comments" x="302" y="466">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="700"/>
+			<nail x="0" y="173"/>
+		</transition>
+	</template>
+	<template>
+		<name>Producer_thread0_sensitiveTemp</name>
+		<parameter>broadcast chan &amp;sensitive</parameter>
+		<location id="id76" x="0" y="16">
+			<name x="-10" y="-18">prod_sens1</name>
+		</location>
+		<location id="id77" x="0" y="80">
+			<name x="8" y="68">prod_sens2</name>
+			<committed/>
+		</location>
+		<init ref="id76"/>
+		<transition>
+			<source ref="id77"/>
+			<target ref="id76"/>
+			<label kind="synchronisation" x="8" y="32">sensitive!</label>
+			<nail x="0" y="64"/>
+			<nail x="0" y="32"/>
+		</transition>
+	</template>
+	<template>
+		<name>SCEventTemplate</name>
+		<parameter>chan &amp;notify_imm, int &amp;notify_t, chan &amp;notify, broadcast chan &amp;wait</parameter>
+		<declaration>clock wait_clock;
+int ndelay;</declaration>
+		<location id="id78" x="476" y="-51">
+			<name x="484" y="-85">init_event_comp1</name>
+		</location>
+		<location id="id79" x="1150" y="95">
+			<name x="1174" y="87">notify_requested_comp1</name>
+			<committed/>
+		</location>
+		<location id="id80" x="561" y="552">
+			<name x="585" y="537">wait_for_delta_comp1</name>
+			<label kind="invariant" x="585" y="552">wait_clock &lt;= ndelay</label>
+		</location>
+		<location id="id81" x="386" y="191">
+			<name x="410" y="183">notify_now_comp1</name>
+			<committed/>
+		</location>
+		<location id="id82" x="537" y="319">
+			<name x="476" y="280">advancing_time_comp1</name>
+			<committed/>
+		</location>
+		<location id="id83" x="768" y="223">
+			<name x="722" y="187">event_comp1_1</name>
+			<committed/>
+		</location>
+		<location id="id84" x="664" y="287">
+			<name x="654" y="253">event_comp1_2</name>
+			<committed/>
+		</location>
+		<location id="id85" x="93" y="119">
+			<name x="83" y="85">event_comp1_3</name>
+			<committed/>
+		</location>
+		<init ref="id78"/>
+		<transition>
+			<source ref="id80"/>
+			<target ref="id79"/>
+			<label kind="synchronisation" x="1097" y="223">notify?</label>
+			<nail x="1089" y="367"/>
+			<nail x="1089" y="111"/>
+		</transition>
+		<transition>
+			<source ref="id79"/>
+			<target ref="id80"/>
+			<label kind="guard" x="1158" y="223">wait_clock + notify_t &gt;= ndelay</label>
+			<label kind="comments" x="1090" y="269">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="1150" y="111"/>
+			<nail x="1150" y="367"/>
+		</transition>
+		<transition>
+			<source ref="id80"/>
+			<target ref="id81"/>
+			<label kind="guard" x="8" y="263">wait_clock == ndelay  &amp;&amp;
+ndelay != 0</label>
+			<label kind="synchronisation" x="8" y="291">advancetime!</label>
+			<label kind="comments" x="708" y="317">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="367"/>
+			<nail x="0" y="207"/>
+		</transition>
+		<transition>
+			<source ref="id82"/>
+			<target ref="id80"/>
+			<label kind="guard" x="394" y="335">wait_clock &lt; ndelay</label>
+			<label kind="comments" x="783" y="381">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="386" y="335"/>
+			<nail x="386" y="367"/>
+		</transition>
+		<transition>
+			<source ref="id82"/>
+			<target ref="id81"/>
+			<label kind="guard" x="394" y="239">wait_clock == ndelay</label>
+			<label kind="comments" x="401" y="285">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="386" y="303"/>
+			<nail x="386" y="207"/>
+		</transition>
+		<transition>
+			<source ref="id80"/>
+			<target ref="id81"/>
+			<label kind="synchronisation" x="198" y="271">notify_imm?</label>
+			<nail x="190" y="367"/>
+			<nail x="190" y="207"/>
+		</transition>
+		<transition>
+			<source ref="id78"/>
+			<target ref="id81"/>
+			<label kind="synchronisation" x="76" y="-17">notify_imm?</label>
+			<nail x="0" y="32"/>
+			<nail x="0" y="175"/>
+		</transition>
+		<transition>
+			<source ref="id78"/>
+			<target ref="id79"/>
+			<label kind="synchronisation" x="705" y="-59">notify?</label>
+			<label kind="assignment" x="714" y="-34">ndelay = notify_t,
+wait_clock = 0</label>
+			<label kind="comments" x="697" y="17">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="1089" y="79"/>
+		</transition>
+		<transition>
+			<source ref="id79"/>
+			<target ref="id83"/>
+			<label kind="guard" x="880" y="143">wait_clock + notify_t &lt; ndelay</label>
+			<label kind="comments" x="899" y="189">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="872" y="111"/>
+			<nail x="872" y="207"/>
+		</transition>
+		<transition>
+			<source ref="id83"/>
+			<target ref="id84"/>
+			<label kind="assignment" x="672" y="239">ndelay = notify_t</label>
+			<label kind="comments" x="656" y="285">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="664" y="239"/>
+			<nail x="664" y="271"/>
+		</transition>
+		<transition>
+			<source ref="id84"/>
+			<target ref="id80"/>
+			<label kind="assignment" x="672" y="319">wait_clock = 0</label>
+			<label kind="comments" x="578" y="442">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="664" y="303"/>
+			<nail x="664" y="367"/>
+		</transition>
+		<transition>
+			<source ref="id80"/>
+			<target ref="id81"/>
+			<label kind="guard" x="298" y="271">ndelay == 0</label>
+			<label kind="synchronisation" x="298" y="284">deltadelay?</label>
+			<label kind="comments" x="187" y="306">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="290" y="367"/>
+			<nail x="290" y="207"/>
+		</transition>
+		<transition>
+			<source ref="id80"/>
+			<target ref="id82"/>
+			<label kind="guard" x="545" y="335">ndelay != 0</label>
+			<label kind="synchronisation" x="545" y="348">advancetime?</label>
+			<label kind="comments" x="450" y="374">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="537" y="367"/>
+			<nail x="537" y="335"/>
+		</transition>
+		<transition>
+			<source ref="id81"/>
+			<target ref="id85"/>
+			<label kind="assignment" x="108" y="143">wait_clock = 0</label>
+			<label kind="comments" x="212" y="127">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="110" y="170"/>
+			<nail x="100" y="143"/>
+		</transition>
+		<transition>
+			<source ref="id85"/>
+			<target ref="id78"/>
+			<label kind="synchronisation" x="195" y="34">wait!</label>
+			<nail x="100" y="111"/>
+			<nail x="204" y="59"/>
+		</transition>
+	</template>
+	<template>
+		<name>SCMainTemplate</name>
+		<location id="id86" x="-263" y="17">
+			<name x="-314" y="-25">init_location_main_temp</name>
+			<urgent/>
+		</location>
+		<location id="id87" x="-8" y="17">
+			<name x="-18" y="-17">scmain1</name>
+			<urgent/>
+		</location>
+		<location id="id88" x="603" y="17">
+			<name x="578" y="34">scmain3</name>
+			<urgent/>
+		</location>
+		<location id="id89" x="841" y="17">
+			<name x="807" y="42">scmain_end</name>
+		</location>
+		<location id="id90" x="323" y="17">
+			<name x="272" y="34">scmain2</name>
+			<urgent/>
+		</location>
+		<init ref="id86"/>
+		<transition>
+			<source ref="id86"/>
+			<target ref="id87"/>
+			<label kind="assignment" x="-246" y="25">prod_d = allocate_static_data()</label>
+			<label kind="comments" x="-246" y="51">Update:
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id88"/>
+			<target ref="id89"/>
+			<label kind="synchronisation" x="629" y="-17">scmodules_initialized!</label>
+		</transition>
+		<transition>
+			<source ref="id87"/>
+			<target ref="id90"/>
+			<label kind="guard" x="8" y="-25">MEM_ERR_NOT_ENOUGH_MEM == 0</label>
+			<label kind="comments" x="8" y="-76">Guard:
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id90"/>
+			<target ref="id88"/>
+			<label kind="assignment" x="340" y="-17">sc_main()</label>
+			<label kind="comments" x="340" y="25">Update:
+nodeID: -1, file: , line: -1</label>
+		</transition>
+	</template>
+	<template>
+		<name>SchedulerTemplate</name>
+		<location id="id91" x="348" y="-110">
+			<name x="372" y="-118">init_location_scheduler</name>
+			<urgent/>
+		</location>
+		<location id="id92" x="840" y="400">
+			<name x="864" y="392">execute</name>
+			<urgent/>
+		</location>
+		<location id="id93" x="348" y="-25">
+			<name x="374" y="-42">evaluate</name>
+			<urgent/>
+		</location>
+		<location id="id94" x="242" y="240">
+			<name x="255" y="229">update</name>
+			<urgent/>
+		</location>
+		<location id="id95" x="150" y="304">
+			<name x="178" y="289">updating</name>
+			<urgent/>
+		</location>
+		<location id="id96" x="485" y="176">
+			<name x="493" y="187">nextdelta</name>
+			<urgent/>
+		</location>
+		<location id="id97" x="606" y="368">
+			<name x="578" y="382">time_progress</name>
+		</location>
+		<location id="id98" x="75" y="368">
+			<name x="42" y="382">scheduler2</name>
+			<urgent/>
+		</location>
+		<location id="id99" x="0" y="144">
+			<name x="25" y="127">scheduler1</name>
+			<urgent/>
+		</location>
+		<init ref="id91"/>
+		<transition>
+			<source ref="id91"/>
+			<target ref="id93"/>
+			<label kind="synchronisation" x="728" y="32">scmodules_initialized?</label>
+		</transition>
+		<transition>
+			<source ref="id93"/>
+			<target ref="id92"/>
+			<label kind="guard" x="728" y="224">readyprocs &gt; 0</label>
+			<label kind="synchronisation" x="728" y="237">activate!</label>
+			<label kind="comments" x="780" y="270">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="720" y="96"/>
+			<nail x="720" y="384"/>
+		</transition>
+		<transition>
+			<source ref="id92"/>
+			<target ref="id93"/>
+			<label kind="synchronisation" x="848" y="224">deactivate?</label>
+			<nail x="840" y="384"/>
+			<nail x="840" y="96"/>
+		</transition>
+		<transition>
+			<source ref="id94"/>
+			<target ref="id98"/>
+			<label kind="guard" x="8" y="288">updaterequests &gt; 0</label>
+			<label kind="comments" x="98" y="334">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="256"/>
+			<nail x="0" y="352"/>
+		</transition>
+		<transition>
+			<source ref="id98"/>
+			<target ref="id95"/>
+			<label kind="synchronisation" x="158" y="320">updatestart!</label>
+			<nail x="150" y="352"/>
+			<nail x="150" y="320"/>
+		</transition>
+		<transition>
+			<source ref="id95"/>
+			<target ref="id94"/>
+			<label kind="synchronisation" x="158" y="256">updateend?</label>
+			<nail x="150" y="288"/>
+			<nail x="150" y="256"/>
+		</transition>
+		<transition>
+			<source ref="id94"/>
+			<target ref="id96"/>
+			<label kind="guard" x="250" y="192">updaterequests == 0</label>
+			<label kind="synchronisation" x="250" y="205">deltadelay!</label>
+			<label kind="comments" x="303" y="238">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="242" y="224"/>
+			<nail x="242" y="192"/>
+		</transition>
+		<transition>
+			<source ref="id96"/>
+			<target ref="id97"/>
+			<label kind="guard" x="485" y="256">readyprocs == 0</label>
+			<label kind="comments" x="485" y="302">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="477" y="192"/>
+			<nail x="477" y="352"/>
+		</transition>
+		<transition>
+			<source ref="id96"/>
+			<target ref="id93"/>
+			<label kind="guard" x="493" y="112">readyprocs &gt; 0</label>
+			<label kind="comments" x="602" y="158">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="485" y="160"/>
+			<nail x="485" y="96"/>
+		</transition>
+		<transition>
+			<source ref="id97"/>
+			<target ref="id93"/>
+			<label kind="synchronisation" x="614" y="208">advancetime?</label>
+			<nail x="606" y="352"/>
+			<nail x="606" y="96"/>
+		</transition>
+		<transition>
+			<source ref="id93"/>
+			<target ref="id99"/>
+			<label kind="guard" x="8" y="96">readyprocs == 0</label>
+			<label kind="comments" x="306" y="119">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="96"/>
+			<nail x="0" y="128"/>
+		</transition>
+		<transition>
+			<source ref="id99"/>
+			<target ref="id94"/>
+			<label kind="assignment" x="8" y="176">deltacount = (deltacount + 1) % 2</label>
+			<label kind="comments" x="61" y="222">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="160"/>
+			<nail x="0" y="224"/>
+		</transition>
+	</template>
+	<template>
+		<name>ThreadStarterTemplate</name>
+		<parameter>chan &amp;ctrl</parameter>
+		<location id="id100" x="-8" y="-59">
+			<name x="-18" y="-93">thread_starter1</name>
+			<urgent/>
+		</location>
+		<location id="id101" x="-8" y="34">
+			<name x="8" y="17">thread_starter2</name>
+			<urgent/>
+		</location>
+		<location id="id102" x="-8" y="127">
+			<name x="17" y="102">thread_starter3</name>
+		</location>
+		<location id="id103" x="-8" y="391">
+			<name x="-18" y="357">thread_starter5</name>
+		</location>
+		<location id="id104" x="-8" y="272">
+			<name x="8" y="255">thread_starter4</name>
+			<urgent/>
+		</location>
+		<init ref="id100"/>
+		<transition>
+			<source ref="id100"/>
+			<target ref="id101"/>
+			<label kind="synchronisation" x="8" y="-34">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id101"/>
+			<target ref="id102"/>
+			<label kind="synchronisation" x="0" y="59">ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id102"/>
+			<target ref="id104"/>
+			<label kind="synchronisation" x="0" y="161">ctrl?</label>
+			<label kind="assignment" x="0" y="178">readyprocs=readyprocs-1</label>
+			<label kind="comments" x="0" y="212">Update:
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id104"/>
+			<target ref="id103"/>
+			<label kind="synchronisation" x="0" y="323">deactivate!</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_element_data</name>
+		<parameter>data_addr_ptr &amp;peq_cb_param_tran, data_addr_ptr &amp;peq_element_param_trans, chan &amp;peq_fetch_ctrl, int_addr_ptr &amp;peq_cb_param_phase, int_addr_ptr &amp;peq_element_param_phase, int &amp;peq_element_param_delay, bool &amp;peqInUse, chan &amp;peq_element_ctrl</parameter>
+		<declaration>int_addr_ptr phase = NULL;
+int delay;
+clock c;
+data_addr_ptr payload = NULL;</declaration>
+		<location id="id105" x="135" y="16">
+			<name x="125" y="-18">peq_element_1</name>
+			<committed/>
+		</location>
+		<location id="id106" x="66" y="176">
+			<name x="110" y="161">peq_element_3</name>
+			<committed/>
+		</location>
+		<location id="id107" x="120" y="314">
+			<name x="136" y="297">peq_element_chkptr_0</name>
+			<committed/>
+		</location>
+		<location id="id108" x="561" y="76">
+			<name x="585" y="68">init_location_peq_element</name>
+		</location>
+		<location id="id109" x="288" y="654">
+			<label kind="invariant" x="312" y="646">c &lt;= delay</label>
+		</location>
+		<location id="id110" x="249" y="718">
+			<name x="272" y="705">peq_element_7</name>
+			<committed/>
+		</location>
+		<location id="id111" x="148" y="908">
+			<name x="93" y="926">peq_element_8</name>
+			<committed/>
+		</location>
+		<location id="id112" x="297" y="844">
+			<name x="314" y="833">peq_element_9</name>
+			<urgent/>
+		</location>
+		<location id="id113" x="133" y="112">
+			<name x="153" y="93">peq_element_2</name>
+			<committed/>
+		</location>
+		<location id="id114" x="121" y="240">
+			<name x="144" y="221">peq_element_4</name>
+			<committed/>
+		</location>
+		<location id="id115" x="0" y="383">
+			<name x="24" y="375">peq_element_chkptr_1</name>
+			<committed/>
+		</location>
+		<location id="id116" x="0" y="462">
+			<name x="24" y="454">peq_element_chkptr_2</name>
+			<committed/>
+		</location>
+		<location id="id117" x="0" y="526">
+			<name x="25" y="510">peq_element_5</name>
+			<committed/>
+		</location>
+		<location id="id118" x="0" y="590">
+			<name x="34" y="578">peq_element_6</name>
+			<committed/>
+		</location>
+		<location id="id119" x="506" y="750">
+			<name x="496" y="716">peq_element_10</name>
+			<urgent/>
+		</location>
+		<init ref="id108"/>
+		<transition>
+			<source ref="id108"/>
+			<target ref="id105"/>
+			<label kind="synchronisation" x="278" y="32">peq_element_ctrl?</label>
+			<nail x="270" y="64"/>
+			<nail x="270" y="32"/>
+		</transition>
+		<transition>
+			<source ref="id105"/>
+			<target ref="id106"/>
+			<label kind="guard" x="8" y="80">payload != NULL</label>
+			<label kind="comments" x="-195" y="144">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="32"/>
+			<nail x="0" y="160"/>
+		</transition>
+		<transition>
+			<source ref="id106"/>
+			<target ref="id107"/>
+			<label kind="guard" x="8" y="224">phase != NULL</label>
+			<label kind="comments" x="-204" y="306">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="192"/>
+			<nail x="0" y="288"/>
+		</transition>
+		<transition>
+			<source ref="id110"/>
+			<target ref="id109"/>
+			<label kind="guard" x="218" y="670">c &lt; delay</label>
+			<label kind="comments" x="-263" y="748">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="210" y="702"/>
+			<nail x="210" y="670"/>
+		</transition>
+		<transition>
+			<source ref="id110"/>
+			<target ref="id111"/>
+			<label kind="guard" x="218" y="797">c == delay</label>
+			<label kind="comments" x="544" y="850">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="210" y="734"/>
+			<nail x="210" y="892"/>
+		</transition>
+		<transition>
+			<source ref="id109"/>
+			<target ref="id111"/>
+			<label kind="guard" x="8" y="757">delay != 0  &amp;&amp;
+c == delay</label>
+			<label kind="synchronisation" x="8" y="785">advancetime!</label>
+			<label kind="comments" x="-255" y="858">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="670"/>
+			<nail x="0" y="892"/>
+		</transition>
+		<transition>
+			<source ref="id111"/>
+			<target ref="id112"/>
+			<label kind="assignment" x="305" y="860">readyprocs=readyprocs+1</label>
+			<label kind="comments" x="544" y="901">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="297" y="892"/>
+			<nail x="297" y="860"/>
+		</transition>
+		<transition>
+			<source ref="id112"/>
+			<target ref="id119"/>
+			<label kind="synchronisation" x="305" y="766">activate?</label>
+			<label kind="assignment" x="305" y="779">peq_cb_param_tran = payload,
+peq_cb_param_phase = phase,
+peqInUse = false</label>
+			<label kind="comments" x="544" y="765">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+			<nail x="297" y="828"/>
+			<nail x="297" y="766"/>
+		</transition>
+		<transition>
+			<source ref="id105"/>
+			<target ref="id113"/>
+			<label kind="guard" x="141" y="48">payload == NULL</label>
+			<label kind="comments" x="-195" y="85">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="133" y="32"/>
+			<nail x="133" y="96"/>
+		</transition>
+		<transition>
+			<source ref="id113"/>
+			<target ref="id106"/>
+			<label kind="assignment" x="141" y="128">payload = allocate_dynamic_data()</label>
+			<label kind="comments" x="-204" y="195">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="133" y="128"/>
+			<nail x="133" y="160"/>
+		</transition>
+		<transition>
+			<source ref="id106"/>
+			<target ref="id114"/>
+			<label kind="guard" x="129" y="192">phase == NULL</label>
+			<label kind="comments" x="-212" y="246">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="121" y="192"/>
+			<nail x="121" y="224"/>
+		</transition>
+		<transition>
+			<source ref="id114"/>
+			<target ref="id107"/>
+			<label kind="assignment" x="129" y="256">phase = allocate_dynamic_int()</label>
+			<label kind="comments" x="-212" y="357">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="121" y="256"/>
+			<nail x="121" y="288"/>
+		</transition>
+		<transition>
+			<source ref="id107"/>
+			<target ref="id115"/>
+			<label kind="guard" x="8" y="320">addr_is_valid_data(payload)  &amp;&amp;
+addr_is_valid_data(peq_element_param_trans)</label>
+			<label kind="assignment" x="8" y="348">dataMem[payload] = dataMem[peq_element_param_trans]</label>
+			<label kind="comments" x="-289" y="416">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="320"/>
+			<nail x="0" y="367"/>
+		</transition>
+		<transition>
+			<source ref="id115"/>
+			<target ref="id116"/>
+			<label kind="guard" x="8" y="399">addr_is_valid_int(peq_element_param_phase)  &amp;&amp;
+addr_is_valid_int(phase)</label>
+			<label kind="assignment" x="8" y="427">intMem[phase] = intMem[peq_element_param_phase]</label>
+			<label kind="comments" x="-289" y="493">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="399"/>
+			<nail x="0" y="446"/>
+		</transition>
+		<transition>
+			<source ref="id116"/>
+			<target ref="id117"/>
+			<label kind="guard" x="8" y="478">addr_is_valid_int(peq_element_param_delay)</label>
+			<label kind="assignment" x="8" y="491">delay = intMem[peq_element_param_delay]</label>
+			<label kind="comments" x="-280" y="561">Guard:
+nodeID: -1, file: , line: -1Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="478"/>
+			<nail x="0" y="510"/>
+		</transition>
+		<transition>
+			<source ref="id117"/>
+			<target ref="id118"/>
+			<label kind="assignment" x="8" y="542">peqInUse = true</label>
+			<label kind="comments" x="-272" y="629">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="542"/>
+			<nail x="0" y="574"/>
+		</transition>
+		<transition>
+			<source ref="id118"/>
+			<target ref="id109"/>
+			<label kind="assignment" x="8" y="606">c = 0</label>
+			<label kind="comments" x="-263" y="688">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="606"/>
+			<nail x="0" y="638"/>
+		</transition>
+		<transition>
+			<source ref="id109"/>
+			<target ref="id110"/>
+			<label kind="guard" x="296" y="670">delay != 0</label>
+			<label kind="synchronisation" x="296" y="683">advancetime?</label>
+			<label kind="comments" x="-263" y="807">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="288" y="670"/>
+			<nail x="288" y="702"/>
+		</transition>
+		<transition>
+			<source ref="id109"/>
+			<target ref="id111"/>
+			<label kind="guard" x="122" y="765">delay == 0</label>
+			<label kind="synchronisation" x="122" y="778">deltadelay?</label>
+			<label kind="comments" x="-238" y="909">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="114" y="670"/>
+			<nail x="114" y="892"/>
+		</transition>
+		<transition>
+			<source ref="id119"/>
+			<target ref="id108"/>
+			<label kind="synchronisation" x="501" y="255">peq_fetch_ctrl!</label>
+			<nail x="510" y="697"/>
+			<nail x="561" y="144"/>
+		</transition>
+	</template>
+	<template>
+		<name>peq_fetch_data</name>
+		<parameter>chan &amp;peq_cb_ctrl, chan &amp;peq_fetch_ctrl</parameter>
+		<location id="id120" x="102" y="-51">
+			<name x="126" y="-59">init_location_fetch_data</name>
+		</location>
+		<location id="id121" x="100" y="80">
+			<name x="119" y="59">fetch_data_1</name>
+			<urgent/>
+		</location>
+		<location id="id122" x="51" y="204">
+			<name x="76" y="195">fetch_data_2</name>
+			<urgent/>
+		</location>
+		<location id="id123" x="-7" y="-51">
+			<name x="-68" y="-85">fetch_data_3</name>
+			<urgent/>
+		</location>
+		<init ref="id120"/>
+		<transition>
+			<source ref="id120"/>
+			<target ref="id121"/>
+			<label kind="synchronisation" x="110" y="0">peq_fetch_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id121"/>
+			<target ref="id122"/>
+			<label kind="synchronisation" x="115" y="112">peq_cb_ctrl!</label>
+			<nail x="102" y="161"/>
+		</transition>
+		<transition>
+			<source ref="id122"/>
+			<target ref="id123"/>
+			<label kind="synchronisation" x="-102" y="25">peq_cb_ctrl?</label>
+			<label kind="assignment" x="-102" y="0">readyprocs=readyprocs-1</label>
+			<label kind="comments" x="-187" y="76">Update:
+nodeID: -1, file: , line: -1</label>
+			<nail x="0" y="160"/>
+		</transition>
+		<transition>
+			<source ref="id123"/>
+			<target ref="id120"/>
+			<label kind="synchronisation" x="8" y="48">deactivate!</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_data_4</name>
+		<parameter>bool &amp;peqInUse[4], chan &amp;peq_notify_ctrl, chan &amp;peq_element_ctrl[4]</parameter>
+		<declaration>int[-1, 3] index = -1;
+int[-1, 4] i = 0;
+int[-1, 3] getIndex(){
+	for (i = 0; i &lt; 4; i++) {
+		if (!peqInUse[i]) {
+			return i;
+		}
+	}
+	return -1;
+}</declaration>
+		<location id="id124" x="0" y="8">
+			<name x="-59" y="-25">peq_notify_2</name>
+		</location>
+		<location id="id125" x="221" y="8">
+			<name x="245" y="0">peq_notify_invoked</name>
+			<urgent/>
+		</location>
+		<location id="id126" x="221" y="187">
+			<name x="211" y="153">peq_notify_4</name>
+			<urgent/>
+		</location>
+		<location id="id127" x="0" y="187">
+			<name x="-76" y="204">peq_notify_3</name>
+			<urgent/>
+		</location>
+		<location id="id128" x="221" y="-153">
+			<name x="211" y="-187">peq_notify_1</name>
+			<urgent/>
+		</location>
+		<init ref="id124"/>
+		<transition>
+			<source ref="id125"/>
+			<target ref="id126"/>
+			<label kind="guard" x="229" y="93">index &gt;= 0</label>
+			<label kind="synchronisation" x="221" y="110">peq_element_ctrl[index]!</label>
+			<label kind="comments" x="433" y="177">Guard:
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id124"/>
+			<target ref="id125"/>
+			<label kind="synchronisation" x="51" y="8">peq_notify_ctrl?</label>
+			<label kind="assignment" x="51" y="-17">index = getIndex()</label>
+			<label kind="comments" x="442" y="42">Update:
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id126"/>
+			<target ref="id127"/>
+			<label kind="assignment" x="68" y="187">index = -1,
+i = 0</label>
+			<label kind="comments" x="433" y="101">Update:
+nodeID: -1, file: , line: -1,
+nodeID: -1, file: , line: -1</label>
+		</transition>
+		<transition>
+			<source ref="id127"/>
+			<target ref="id124"/>
+			<label kind="synchronisation" x="-42" y="76">peq_notify_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id125"/>
+			<target ref="id128"/>
+			<label kind="guard" x="-34" y="-110">index &lt; 0  &amp;&amp;
+!PEQ_ERR_OUT_OF_ELEMENTS</label>
+			<label kind="comments" x="433" y="-69">Guard:
+nodeID: -1, file: , line: -1</label>
+			<nail x="161" y="-68"/>
+		</transition>
+		<transition>
+			<source ref="id128"/>
+			<target ref="id125"/>
+			<label kind="assignment" x="216" y="-123">PEQ_ERR_OUT_OF_ELEMENTS = true</label>
+			<label kind="comments" x="442" y="-18">Update:
+nodeID: -1, file: , line: -1</label>
+		</transition>
+	</template>
+	<system>cons_Consumer_Consumer_cons_peq_cb = Consumer_cons_peq_cb(prod_Producer_nb_transport_bw_param_phase, cons_Consumer_cons_peq_cb_ctrl, cons_Consumer_cons_peq_cb_param_phase, prod_Producer_nb_transport_bw_param_tran, cons_cons_peq_peq_element_param_delay, prod_Producer_nb_transport_bw_ctrl, cons_cons_peq_peq_element_param_trans, prod_Producer_nb_transport_bw_param_t, cons_cons_peq_notify_peq_notify_ctrl, cons_Consumer_cons_peq_cb_param_tran, cons_cons_peq_peq_element_param_phase);
+cons_Consumer_Consumer_nb_transport_fw = Consumer_nb_transport_fw(cons_Consumer_nb_transport_fw_param_phase, cons_Consumer_nb_transport_fw_ctrl, cons_cons_peq_peq_element_param_delay, cons_Consumer_nb_transport_fw_param_t, cons_cons_peq_peq_element_param_trans, cons_Consumer_nb_transport_fw_return, cons_Consumer_nb_transport_fw_param_tran, cons_cons_peq_notify_peq_notify_ctrl, cons_cons_peq_peq_element_param_phase);
+cons_cons_peq_peq_element0 = peq_element_data(cons_Consumer_cons_peq_cb_param_tran, cons_cons_peq_peq_element_param_trans, cons_cons_peq_fetch_peq_fetch_ctrl, cons_Consumer_cons_peq_cb_param_phase, cons_cons_peq_peq_element_param_phase, cons_cons_peq_peq_element_param_delay, cons_cons_peq_notify_peqInUse[0], cons_cons_peq_notify_peq_element_ctrl[0]);
+cons_cons_peq_peq_element1 = peq_element_data(cons_Consumer_cons_peq_cb_param_tran, cons_cons_peq_peq_element_param_trans, cons_cons_peq_fetch_peq_fetch_ctrl, cons_Consumer_cons_peq_cb_param_phase, cons_cons_peq_peq_element_param_phase, cons_cons_peq_peq_element_param_delay, cons_cons_peq_notify_peqInUse[1], cons_cons_peq_notify_peq_element_ctrl[1]);
+cons_cons_peq_peq_element2 = peq_element_data(cons_Consumer_cons_peq_cb_param_tran, cons_cons_peq_peq_element_param_trans, cons_cons_peq_fetch_peq_fetch_ctrl, cons_Consumer_cons_peq_cb_param_phase, cons_cons_peq_peq_element_param_phase, cons_cons_peq_peq_element_param_delay, cons_cons_peq_notify_peqInUse[2], cons_cons_peq_notify_peq_element_ctrl[2]);
+cons_cons_peq_peq_element3 = peq_element_data(cons_Consumer_cons_peq_cb_param_tran, cons_cons_peq_peq_element_param_trans, cons_cons_peq_fetch_peq_fetch_ctrl, cons_Consumer_cons_peq_cb_param_phase, cons_cons_peq_peq_element_param_phase, cons_cons_peq_peq_element_param_delay, cons_cons_peq_notify_peqInUse[3], cons_cons_peq_notify_peq_element_ctrl[3]);
+cons_cons_peq_peq_fetch = peq_fetch_data(cons_Consumer_cons_peq_cb_ctrl, cons_cons_peq_fetch_peq_fetch_ctrl);
+cons_cons_peq_peq_notify = peq_notify_data_4(cons_cons_peq_notify_peqInUse, cons_cons_peq_notify_peq_notify_ctrl, cons_cons_peq_notify_peq_element_ctrl);
+initialization = InitializerTemplate();
+prod_Producer_Producer_nb_transport_bw = Producer_nb_transport_bw(prod_prod_peq_peq_element_param_delay, prod_Producer_nb_transport_bw_ctrl, prod_prod_peq_peq_element_param_trans, prod_prod_peq_peq_element_param_phase, prod_Producer_nb_transport_bw_param_t, prod_Producer_nb_transport_bw_param_phase, prod_Producer_nb_transport_bw_return, prod_Producer_nb_transport_bw_param_tran, prod_prod_peq_notify_peq_notify_ctrl);
+prod_Producer_Producer_prod_peq_cb = Producer_prod_peq_cb(prod_prod_peq_peq_element_param_delay, cons_Consumer_nb_transport_fw_param_tran, prod_Producer_prod_peq_cb_ctrl, cons_Consumer_nb_transport_fw_param_t, prod_Producer_prod_peq_cb_param_phase, prod_prod_peq_peq_element_param_trans, prod_prod_peq_peq_element_param_phase, prod_Producer_prod_peq_cb_param_tran, cons_Consumer_nb_transport_fw_param_phase, prod_prod_peq_notify_peq_notify_ctrl, cons_Consumer_nb_transport_fw_ctrl);
+prod_prod_peq_peq_element0 = peq_element_data(prod_Producer_prod_peq_cb_param_tran, prod_prod_peq_peq_element_param_trans, prod_prod_peq_fetch_peq_fetch_ctrl, prod_Producer_prod_peq_cb_param_phase, prod_prod_peq_peq_element_param_phase, prod_prod_peq_peq_element_param_delay, prod_prod_peq_notify_peqInUse[0], prod_prod_peq_notify_peq_element_ctrl[0]);
+prod_prod_peq_peq_element1 = peq_element_data(prod_Producer_prod_peq_cb_param_tran, prod_prod_peq_peq_element_param_trans, prod_prod_peq_fetch_peq_fetch_ctrl, prod_Producer_prod_peq_cb_param_phase, prod_prod_peq_peq_element_param_phase, prod_prod_peq_peq_element_param_delay, prod_prod_peq_notify_peqInUse[1], prod_prod_peq_notify_peq_element_ctrl[1]);
+prod_prod_peq_peq_element2 = peq_element_data(prod_Producer_prod_peq_cb_param_tran, prod_prod_peq_peq_element_param_trans, prod_prod_peq_fetch_peq_fetch_ctrl, prod_Producer_prod_peq_cb_param_phase, prod_prod_peq_peq_element_param_phase, prod_prod_peq_peq_element_param_delay, prod_prod_peq_notify_peqInUse[2], prod_prod_peq_notify_peq_element_ctrl[2]);
+prod_prod_peq_peq_element3 = peq_element_data(prod_Producer_prod_peq_cb_param_tran, prod_prod_peq_peq_element_param_trans, prod_prod_peq_fetch_peq_fetch_ctrl, prod_Producer_prod_peq_cb_param_phase, prod_prod_peq_peq_element_param_phase, prod_prod_peq_peq_element_param_delay, prod_prod_peq_notify_peqInUse[3], prod_prod_peq_notify_peq_element_ctrl[3]);
+prod_prod_peq_peq_fetch = peq_fetch_data(prod_Producer_prod_peq_cb_ctrl, prod_prod_peq_fetch_peq_fetch_ctrl);
+prod_prod_peq_peq_notify = peq_notify_data_4(prod_prod_peq_notify_peqInUse, prod_prod_peq_notify_peq_notify_ctrl, prod_prod_peq_notify_peq_element_ctrl);
+prod_thread0_Producer_Producer_initiator_main = Producer_initiator_main(cons_Consumer_nb_transport_fw_param_tran, cons_Consumer_nb_transport_fw_param_t, prod_d, prod_thread0_Producer_initiator_main_ctrl, prod_thread0_timeoutevent_notify_t, cons_Consumer_nb_transport_fw_param_phase, cons_Consumer_nb_transport_fw_return, prod_thread0_timeoutevent_wait, prod_thread0_timeoutevent_notify, cons_Consumer_nb_transport_fw_ctrl);
+prod_thread0_sensitive = Producer_thread0_sensitiveTemp(prod_thread0_sensitivechan);
+prod_thread0_starter = ThreadStarterTemplate(prod_thread0_Producer_initiator_main_ctrl);
+prod_thread0_timeoutevent = SCEventTemplate(prod_thread0_timeoutevent_notify_imm, prod_thread0_timeoutevent_notify_t, prod_thread0_timeoutevent_notify, prod_thread0_timeoutevent_wait);
+scheduler = SchedulerTemplate();
+scmain = SCMainTemplate();
+
+
+system cons_Consumer_Consumer_cons_peq_cb,
+cons_Consumer_Consumer_nb_transport_fw,
+cons_cons_peq_peq_element0,
+cons_cons_peq_peq_element1,
+cons_cons_peq_peq_element2,
+cons_cons_peq_peq_element3,
+cons_cons_peq_peq_fetch,
+cons_cons_peq_peq_notify,
+initialization,
+prod_Producer_Producer_nb_transport_bw,
+prod_Producer_Producer_prod_peq_cb,
+prod_prod_peq_peq_element0,
+prod_prod_peq_peq_element1,
+prod_prod_peq_peq_element2,
+prod_prod_peq_peq_element3,
+prod_prod_peq_peq_fetch,
+prod_prod_peq_peq_notify,
+prod_thread0_Producer_Producer_initiator_main,
+prod_thread0_sensitive,
+prod_thread0_starter,
+prod_thread0_timeoutevent,
+scheduler,
+scmain;</system>
+	<queries>
+		<query>
+			<formula>scheduler.evaluate --&gt; scheduler.execute
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>

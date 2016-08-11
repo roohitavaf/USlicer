@@ -1,0 +1,23 @@
+1- Functions: Call the variables of a function used on a transition before the slicing. Copy the function call on the transition after applying the slicing algorithm if it is needed on the sliced model.
+
+2- Arrays: Based on the parameters and local variables of a template/module, create a new template and change the names of the parameters and local variables. Copy the name of the rest of the variables unchanged.
+
+3- Check the following example. Sometimes it does not work properly:
+
+A =
+5,
+B=4,
+C=3
+
+The slicer considers A and 5 as two different variables
+
+
+4- Check why a++/a-- does not work properly.
+
+5- add Array-name and memory to the set of used variables in the follwing case: 
+
+Array-name[memory]= x
+
+6- Remove system declaration of the templates which are completely removed
+
+

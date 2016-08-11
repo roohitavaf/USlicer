@@ -1,0 +1,2756 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>
+const int NULL := -1;
+const int BEGIN_REQ := 1;
+const int END_REQ := 2;
+const int BEGIN_RESP := 3;
+const int END_RESP := 4;
+const int TLM_OK_RESPONSE := 1;
+const int TLM_BURST_ERROR_RESPONSE := 2;
+const int TLM_GENERIC_ERROR_RESPONSE := 3;
+const int TLM_INCOMPLETE_RESPONSE := 4;
+const int TLM_BYTE_ENABLE_ERROR_RESPONSE := 5;
+const int TLM_READ_COMMAND := 31;
+const int TLM_WRITE_COMMAND := 32;
+const int TLM_IGNORE_COMMAND := 33;
+
+chan tran_acquire_ctrl, tran_release_ctrl;
+
+clock global;
+typedef struct {
+	int tlm_phase_type;
+	int command;
+	int address;
+	int data_ptr;
+	int data_length;
+	int streaming_width;
+	int byte_enable_ptr;
+	int dmi_allowed;
+	int response_status;
+} payload;
+payload payload_empty = {0,0,0,0,0,0,0,0,0};
+const int INT_MEMSIZE := 31;
+int intMem[INT_MEMSIZE] = {0, 0, 0, 2222, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const int PAYLOAD_MEMSIZE := 5;
+payload payloadMem[PAYLOAD_MEMSIZE] = {{0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0}};
+const int TLM_ACCEPTED := 0;
+const int TLM_COMPLETED := 2;
+const int TLM_UPDATED := 1;
+chan activate;
+broadcast chan advancetime;
+chan deactivate;
+int deltacount := 0;
+broadcast chan deltadelay;
+broadcast chan dummybchannel;
+chan dummychannel;
+int dummyinteger;
+broadcast chan initdone;
+const int[-1, INT_MEMSIZE-1] initiator_Initiator_peq_cb_local_delay := 1;
+const int[-1, INT_MEMSIZE-1] initiator_Initiator_peq_cb_local_fw_phase := 6;
+chan initiator_allocate_ctrl;
+int initiator_allocate_return := NULL;
+chan initiator_check_transaction_ctrl;
+int[-1, PAYLOAD_MEMSIZE-1] initiator_check_transaction_param_tran;
+int initiator_count;
+const int[-1, INT_MEMSIZE-1] initiator_data := 7;
+chan initiator_end_request_event_notify;
+chan initiator_end_request_event_notify_imm;
+int initiator_end_request_event_notify_t;
+broadcast chan initiator_end_request_event_wait;
+int initiator_firstIndex;
+chan initiator_free_ctrl;
+int initiator_free_param_tran := NULL;
+int initiator_freeIndex;
+bool initiator_m_peq_peqInUse[4];
+chan initiator_m_peq_peq_dispatcher_ctrl;
+chan initiator_m_peq_peq_fetch_ctrl;
+int[-1, INT_MEMSIZE-1] initiator_m_peq_peq_fetch_param_phase;
+int[-1, PAYLOAD_MEMSIZE-1] initiator_m_peq_peq_fetch_param_tran;
+chan initiator_m_peq_peq_notify_ctrl[4];
+int initiator_m_peq_peq_notify_param_delay;
+int[-1, INT_MEMSIZE-1] initiator_m_peq_peq_notify_param_phase;
+int[-1, PAYLOAD_MEMSIZE-1] initiator_m_peq_peq_notify_param_trans;
+const int[-1, INT_MEMSIZE-1] initiator_m_peq_peq_notify0_local_phase := 30;
+const int[-1, INT_MEMSIZE-1] initiator_m_peq_peq_notify1_local_phase := 27;
+const int[-1, INT_MEMSIZE-1] initiator_m_peq_peq_notify2_local_phase := 25;
+const int[-1, INT_MEMSIZE-1] initiator_m_peq_peq_notify3_local_phase := 24;
+const int[-1, PAYLOAD_MEMSIZE-1] initiator_mem := 0;
+chan initiator_peq_cb_ctrl;
+int[-1, INT_MEMSIZE-1] initiator_peq_cb_param_phase;
+int[-1, PAYLOAD_MEMSIZE-1] initiator_peq_cb_param_tran;
+int[-1, PAYLOAD_MEMSIZE-1] initiator_request_in_progress;
+const int[-1, INT_MEMSIZE-1] initiator_thread0_Initiator_thread_process_local_delay := 5;
+const int[-1, INT_MEMSIZE-1] initiator_thread0_Initiator_thread_process_local_phase := 4;
+broadcast chan initiator_thread0_sensitivechan;
+chan initiator_thread0_thread_process_ctrl;
+chan initiator_thread0_timeoutevent_notify;
+chan initiator_thread0_timeoutevent_notify_imm;
+int initiator_thread0_timeoutevent_notify_t;
+broadcast chan initiator_thread0_timeoutevent_wait;
+const int null := -1;
+int readyprocs := 1;
+chan target_b_transport_ctrl;
+int[-1, INT_MEMSIZE-1] target_b_transport_param_t;
+int[-1, PAYLOAD_MEMSIZE-1] target_b_transport_param_tran;
+int[-1, PAYLOAD_MEMSIZE-1] target_end_req_pending;
+bool target_m_peq_peqInUse[4];
+chan target_m_peq_peq_dispatcher_ctrl;
+chan target_m_peq_peq_fetch_ctrl;
+int[-1, INT_MEMSIZE-1] target_m_peq_peq_fetch_param_phase;
+int[-1, PAYLOAD_MEMSIZE-1] target_m_peq_peq_fetch_param_tran;
+chan target_m_peq_peq_notify_ctrl[4];
+int target_m_peq_peq_notify_param_delay;
+int[-1, INT_MEMSIZE-1] target_m_peq_peq_notify_param_phase;
+int[-1, PAYLOAD_MEMSIZE-1] target_m_peq_peq_notify_param_trans;
+const int[-1, INT_MEMSIZE-1] target_m_peq_peq_notify0_local_phase := 23;
+const int[-1, INT_MEMSIZE-1] target_m_peq_peq_notify1_local_phase := 28;
+const int[-1, INT_MEMSIZE-1] target_m_peq_peq_notify2_local_phase := 26;
+const int[-1, INT_MEMSIZE-1] target_m_peq_peq_notify3_local_phase := 29;
+int target_n_trans := 0;
+chan target_nb_transport_fw_ctrl;
+int[-1, INT_MEMSIZE-1] target_nb_transport_fw_param_phase;
+int[-1, INT_MEMSIZE-1] target_nb_transport_fw_param_t;
+int[-1, PAYLOAD_MEMSIZE-1] target_nb_transport_fw_param_tran;
+int target_nb_transport_fw_return;
+int[-1, PAYLOAD_MEMSIZE-1] target_next_response_pending;
+chan target_peq_cb_ctrl;
+int[-1, INT_MEMSIZE-1] target_peq_cb_param_phase;
+int[-1, PAYLOAD_MEMSIZE-1] target_peq_cb_param_tran;
+int target_response_in_progress := 0;
+typedef int tlm_sync_enum;
+chan updateend;
+int updaterequests := 0;
+chan updatestart;
+
+int delaycheck[10] := {0,0,0,0,0,0,0,0,0,0};
+int ntransaction := 0;
+</declaration>
+	<template>
+		<name>InitializerTemplate</name>
+		<location id="id0" x="40" y="80">
+			<name x="30" y="46">Init_temp1</name>
+			<urgent/>
+		</location>
+		<location id="id1" x="190" y="80">
+			<name x="180" y="46">Init_temp2</name>
+			<committed/>
+		</location>
+		<location id="id2" x="190" y="230">
+			<name x="212" y="221">Init_temp3</name>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="68" y="85">deltadelay?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="130" y="140">initdone!</label>
+		</transition>
+	</template>
+	<template>
+		<name>Initiator_allocate</name>
+		<parameter>const int[-1, PAYLOAD_MEMSIZE-1] mem, int &amp;freeIndex, int &amp;count, chan &amp;allocate_ctrl, int &amp;allocate_return</parameter>
+		<declaration>int[-1, PAYLOAD_MEMSIZE-1] ptr := NULL;
+</declaration>
+		<location id="id3" x="-128" y="-56">
+			<name x="-187" y="-93">init_location_allocate</name>
+		</location>
+		<location id="id4" x="464" y="-56">
+			<name x="454" y="-90">Init_allocate1</name>
+			<urgent/>
+		</location>
+		<init ref="id3"/>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="93" y="-34">allocate_ctrl?</label>
+			<label kind="assignment" x="93" y="-17">(count)=count+1,
+(ptr) = ((mem) + (freeIndex)),
+(freeIndex) = (((freeIndex) + (1)) % (5))</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="102" y="-195">allocate_ctrl!</label>
+			<label kind="assignment" x="102" y="-178">(allocate_return) = (ptr),
+(ptr) = (NULL)</label>
+			<nail x="170" y="-144"/>
+		</transition>
+	</template>
+	<template>
+		<name>Initiator_check_transaction</name>
+		<parameter>chan &amp;free_ctrl, int &amp;free_param_tran, chan &amp;check_transaction_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;check_transaction_param_tran</parameter>
+		<declaration>int cmd;
+int adr;
+int[-1, INT_MEMSIZE-1] ptr := NULL;
+</declaration>
+		<location id="id5" x="-8" y="80">
+			<name x="-187" y="68">init_location_check_tran</name>
+		</location>
+		<location id="id6" x="190" y="80">
+			<name x="212" y="76">init_check_tran1</name>
+			<urgent/>
+		</location>
+		<location id="id7" x="190" y="230">
+			<name x="187" y="246">init_check_tran2</name>
+		</location>
+		<location id="id8" x="-8" y="232">
+			<name x="-68" y="246">init_check_tran3</name>
+			<urgent/>
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="-24" y="-7">check_transaction_ctrl?</label>
+			<label kind="assignment" x="-17" y="8">(cmd) = (payloadMem[check_transaction_param_tran].command),
+(adr) = (payloadMem[check_transaction_param_tran].address),
+(ptr) = (payloadMem[check_transaction_param_tran].data_ptr)</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="128" y="128">free_ctrl!</label>
+			<label kind="assignment" x="104" y="144">(free_param_tran)=(check_transaction_param_tran)</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="64" y="208">free_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="-128" y="137">check_transaction_ctrl!</label>
+			<label kind="assignment" x="-96" y="160">(cmd) = (0),
+(adr) = (0),
+(ptr) = (NULL)</label>
+		</transition>
+	</template>
+	<template>
+		<name>Initiator_free</name>
+		<parameter>int &amp;firstIndex, int &amp;count, chan &amp;free_ctrl, int &amp;free_param_tran</parameter>
+		<declaration>int[-1, PAYLOAD_MEMSIZE-1] tran := NULL;
+</declaration>
+		<location id="id9" x="-119" y="84">
+			<name x="-221" y="51">init_location_free</name>
+		</location>
+		<location id="id10" x="190" y="80">
+			<name x="180" y="46">Init_free1</name>
+			<urgent/>
+		</location>
+		<init ref="id9"/>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="synchronisation" x="-25" y="85">free_ctrl?</label>
+			<label kind="assignment" x="-34" y="102">(tran) = (free_param_tran),
+count=count-1,
+(firstIndex) = (((firstIndex) + (1)) % (5))</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="12" y="-21">free_ctrl!</label>
+			<label kind="assignment" x="-8" y="-34">(tran) = (NULL)</label>
+			<nail x="38" y="4"/>
+		</transition>
+	</template>
+	<template>
+		<name>Initiator_peq_cb</name>
+		<parameter>chan &amp;socket_nb_transport_fw_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;socket_nb_transport_fw_param_tran, int[-1, INT_MEMSIZE-1] &amp;socket_nb_transport_fw_param_phase, int[-1, INT_MEMSIZE-1] &amp;socket_nb_transport_fw_param_t, int &amp;socket_nb_transport_fw_return, int[-1, PAYLOAD_MEMSIZE-1] &amp;request_in_progress, chan &amp;end_request_event_notify_imm, chan &amp;check_transaction_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;check_transaction_param_tran, chan &amp;peq_cb_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_cb_param_tran, int[-1, INT_MEMSIZE-1] &amp;peq_cb_param_phase, const int delay, const int fw_phase</parameter>
+		<location id="id11" x="-232" y="90">
+			<name x="-348" y="51">init_location_peq_cb</name>
+		</location>
+		<location id="id12" x="-104" y="88">
+			<name x="-204" y="110">Init_peq_cb1</name>
+			<urgent/>
+		</location>
+		<location id="id13" x="-104" y="440">
+			<name x="-153" y="450">Init_peq_cb2</name>
+			<urgent/>
+		</location>
+		<location id="id14" x="231" y="442">
+			<name x="204" y="459">Init_peq_cb3</name>
+			<urgent/>
+		</location>
+		<location id="id15" x="112" y="88">
+			<name x="102" y="59">Init_peq_cb4</name>
+			<urgent/>
+		</location>
+		<location id="id16" x="336" y="88">
+			<name x="326" y="54">Init_peq_cb5</name>
+			<urgent/>
+		</location>
+		<location id="id17" x="336" y="264">
+			<name x="326" y="230">Init_peq_cb6</name>
+			<urgent/>
+		</location>
+		<location id="id18" x="336" y="432">
+			<name x="326" y="398">Init_peq_cb7</name>
+		</location>
+		<location id="id19" x="496" y="432">
+			<name x="486" y="398">Init_peq_cb8</name>
+			<urgent/>
+		</location>
+		<location id="id20" x="490" y="80">
+			<name x="480" y="46">Init_peq_cb9</name>
+		</location>
+		<location id="id21" x="56" y="-88">
+			<urgent/>
+		</location>
+		<init ref="id11"/>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="-200" y="88">peq_cb_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-280" y="328">((intMem[peq_cb_param_phase]) == (END_REQ)) 
+|| (((peq_cb_param_tran) == (request_in_progress)) 
+&amp;&amp; ((intMem[peq_cb_param_phase]) == (BEGIN_RESP)))</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id14"/>
+			<label kind="assignment" x="-24" y="440">(request_in_progress) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="72" y="392">end_request_event_notify_imm!</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="guard" x="96" y="96">((intMem[peq_cb_param_phase]) == (BEGIN_REQ)) 
+|| ((intMem[peq_cb_param_phase]) == (END_RESP))</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-68" y="212">!(((intMem[peq_cb_param_phase]) == (BEGIN_REQ)) 
+|| ((intMem[peq_cb_param_phase]) == (END_RESP)))</label>
+			<nail x="192" y="200"/>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-76" y="8">!(((intMem[peq_cb_param_phase])== (END_REQ)) 
+|| (((peq_cb_param_tran) == (request_in_progress)) 
+&amp;&amp; ((intMem[peq_cb_param_phase]) == (BEGIN_RESP))))</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="guard" x="240" y="176">(intMem[peq_cb_param_phase]) == (BEGIN_RESP)</label>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id18"/>
+			<label kind="synchronisation" x="248" y="320">check_transaction_ctrl!</label>
+			<label kind="assignment" x="248" y="336">(check_transaction_param_tran)= (peq_cb_param_tran)</label>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id19"/>
+			<label kind="synchronisation" x="336" y="440">check_transaction_ctrl?</label>
+			<label kind="assignment" x="336" y="456">(check_transaction_param_tran) = (0),
+(intMem[fw_phase]) = (END_RESP),
+(intMem[delay]) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id20"/>
+			<label kind="synchronisation" x="408" y="241">socket_nb_transport_fw_ctrl!</label>
+			<label kind="assignment" x="408" y="256">(socket_nb_transport_fw_param_tran) = (peq_cb_param_tran),
+(socket_nb_transport_fw_param_phase) = (fw_phase),
+(socket_nb_transport_fw_param_t) = (delay)</label>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="248" y="-32">socket_nb_transport_fw_ctrl?</label>
+			<label kind="assignment" x="272" y="-119">(socket_nb_transport_fw_param_t) = (0),
+(socket_nb_transport_fw_param_phase) = (0),
+(socket_nb_transport_fw_param_tran) = (0),
+socket_nb_transport_fw_return=0</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id21"/>
+			<label kind="guard" x="-51" y="-25">!((intMem[peq_cb_param_phase])==(BEGIN_RESP))</label>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="-128" y="-32">peq_cb_ctrl!</label>
+		</transition>
+	</template>
+	<template>
+		<name>Initiator_thread0_sensitiveTemp</name>
+		<parameter>broadcast chan &amp;sensitive</parameter>
+		<location id="id22" x="40" y="80">
+			<name x="-42" y="42">Init_thread_sens1</name>
+		</location>
+		<location id="id23" x="190" y="80">
+			<name x="180" y="46">Init_thread_sens2</name>
+			<committed/>
+		</location>
+		<init ref="id23"/>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="76" y="59">sensitive!</label>
+		</transition>
+	</template>
+	<template>
+		<name>Initiator_thread_process</name>
+		<parameter>broadcast chan &amp;timeoutevent_wait, chan &amp;timeoutevent_notify, int &amp;timeoutevent_notify_t, chan &amp;socket_nb_transport_fw_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;socket_nb_transport_fw_param_tran, int[-1, INT_MEMSIZE-1] &amp;socket_nb_transport_fw_param_phase, int[-1, INT_MEMSIZE-1] &amp;socket_nb_transport_fw_param_t, int &amp;socket_nb_transport_fw_return, chan &amp;socket_b_transport_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;socket_b_transport_param_tran, int[-1, INT_MEMSIZE-1] &amp;socket_b_transport_param_t, chan &amp;m_peq_peq_dispatcher_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;m_peq_peq_notify_param_trans, int[-1, INT_MEMSIZE-1] &amp;m_peq_peq_notify_param_phase, int &amp;m_peq_peq_notify_param_delay, const int[-1, INT_MEMSIZE-1] data, int[-1, PAYLOAD_MEMSIZE-1] &amp;request_in_progress, broadcast chan &amp;end_request_event_wait, chan &amp;allocate_ctrl, int &amp;allocate_return, chan &amp;check_transaction_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;check_transaction_param_tran, chan &amp;thread_process_ctrl, const int phase, const int delay</parameter>
+		<declaration>int[-1, PAYLOAD_MEMSIZE-1] tran := NULL;
+int i := 0;
+int adr;
+int auto_rand_value0;
+int cmd;
+int auto_rand_value1;
+int auto_rand_value2;
+int status;
+</declaration>
+		<location id="id24" x="-51" y="76">
+			<name x="-161" y="42">init_location_thread_process</name>
+		</location>
+		<location id="id25" x="-42" y="1504">
+			<name x="-153" y="1513">Init_thread_process12</name>
+			<urgent/>
+		</location>
+		<location id="id26" x="25" y="1368">
+			<name x="51" y="1351">Init_thread_process13</name>
+			<urgent/>
+		</location>
+		<location id="id27" x="986" y="1496">
+			<name x="1011" y="1479">Init_thread_process11</name>
+			<urgent/>
+		</location>
+		<location id="id28" x="59" y="1045">
+			<name x="-17" y="1011">Init_thread_process14</name>
+			<urgent/>
+		</location>
+		<location id="id29" x="59" y="799">
+			<name x="-17" y="816">Init_thread_process15</name>
+			<urgent/>
+		</location>
+		<location id="id30" x="59" y="467">
+			<name x="-17" y="501">Init_thread_process16</name>
+			<urgent/>
+		</location>
+		<location id="id31" x="144" y="467">
+			<name x="127" y="476">Init_thread_process17</name>
+			<urgent/>
+		</location>
+		<location id="id32" x="136" y="204">
+			<name x="126" y="170">Init_thread_process38</name>
+			<urgent/>
+		</location>
+		<location id="id33" x="433" y="204">
+			<name x="423" y="170">Init_thread_process39</name>
+			<urgent/>
+		</location>
+		<location id="id34" x="433" y="467">
+			<name x="425" y="484">Init_thread_process18</name>
+			<urgent/>
+		</location>
+		<location id="id35" x="212" y="561">
+			<name x="238" y="552">Init_thread_process19</name>
+		</location>
+		<location id="id36" x="221" y="884">
+			<name x="178" y="841">Init_thread_process20</name>
+			<urgent/>
+		</location>
+		<location id="id37" x="221" y="1181">
+			<name x="153" y="1139">Init_thread_process34</name>
+			<urgent/>
+		</location>
+		<location id="id38" x="374" y="1173">
+			<name x="314" y="1139">Init_thread_process33</name>
+		</location>
+		<location id="id39" x="374" y="1028">
+			<name x="306" y="994">Init_thread_process32</name>
+			<urgent/>
+		</location>
+		<location id="id40" x="374" y="892">
+			<name x="314" y="901">Init_thread_process21</name>
+			<urgent/>
+		</location>
+		<location id="id41" x="569" y="705">
+			<name x="527" y="714">Init_thread_process22</name>
+			<urgent/>
+		</location>
+		<location id="id42" x="850" y="705">
+			<name x="867" y="697">Init_thread_process23</name>
+		</location>
+		<location id="id43" x="850" y="867">
+			<name x="816" y="875">Init_thread_process24</name>
+			<urgent/>
+		</location>
+		<location id="id44" x="850" y="1020">
+			<name x="799" y="986">Init_thread_process25</name>
+			<urgent/>
+		</location>
+		<location id="id45" x="850" y="1181">
+			<name x="782" y="1147">Init_thread_process26</name>
+			<urgent/>
+		</location>
+		<location id="id46" x="527" y="867">
+			<name x="510" y="833">Init_thread_process31</name>
+			<urgent/>
+		</location>
+		<location id="id47" x="527" y="1028">
+			<name x="459" y="1045">Init_thread_process30</name>
+			<urgent/>
+		</location>
+		<location id="id48" x="527" y="1147">
+			<name x="459" y="1156">Init_thread_process29</name>
+			<urgent/>
+		</location>
+		<location id="id49" x="527" y="1275">
+			<name x="450" y="1249">Init_thread_process28</name>
+		</location>
+		<location id="id50" x="850" y="1402">
+			<name x="816" y="1419">Init_thread_process27</name>
+			<urgent/>
+		</location>
+		<location id="id51" x="578" y="1411">
+			<name x="568" y="1377">Init_thread_process37</name>
+			<committed/>
+		</location>
+		<location id="id52" x="144" y="1419">
+			<name x="134" y="1385">Init_thread_process35</name>
+			<urgent/>
+		</location>
+		<location id="id53" x="374" y="1411">
+			<name x="364" y="1377">Init_thread_process36</name>
+		</location>
+		<location id="id54" x="986" y="969">
+			<name x="1011" y="969">Init_thread_process10</name>
+			<committed/>
+		</location>
+		<location id="id55" x="986" y="739">
+			<name x="1028" y="722">Init_thread_process8</name>
+			<urgent/>
+		</location>
+		<location id="id56" x="986" y="612">
+			<name x="1011" y="595">Init_thread_process7</name>
+			<urgent/>
+		</location>
+		<location id="id57" x="986" y="850">
+			<name x="1020" y="841">Init_thread_process9</name>
+		</location>
+		<location id="id58" x="986" y="476">
+			<name x="824" y="467">Init_thread_process6</name>
+		</location>
+		<location id="id59" x="986" y="263">
+			<name x="824" y="255">Init_thread_process5</name>
+			<urgent/>
+		</location>
+		<location id="id60" x="986" y="76">
+			<name x="1011" y="59">Init_thread_process4</name>
+		</location>
+		<location id="id61" x="731" y="76">
+			<name x="688" y="93">Init_thread_process3</name>
+			<urgent/>
+		</location>
+		<location id="id62" x="442" y="76">
+			<name x="382" y="93">Init_thread_process2</name>
+		</location>
+		<location id="id63" x="204" y="76">
+			<name x="170" y="93">Init_thread_process1</name>
+			<urgent/>
+		</location>
+		<init ref="id24"/>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id25"/>
+			<label kind="synchronisation" x="-127" y="697">thread_process_ctrl?</label>
+			<label kind="assignment" x="-119" y="680">i=0</label>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id26"/>
+			<label kind="guard" x="-25" y="1419">(i) &lt; (1000)</label>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id28"/>
+			<label kind="select" x="8" y="1147">rand: int[0, 32767]</label>
+			<label kind="assignment" x="-17" y="1173">(auto_rand_value0) = (rand)</label>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id29"/>
+			<label kind="assignment" x="-17" y="909">(adr) = (auto_rand_value0)</label>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id30"/>
+			<label kind="select" x="-25" y="603">rand: int[0, 32767]</label>
+			<label kind="assignment" x="-51" y="620">(auto_rand_value1) = (rand)</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id31"/>
+			<label kind="assignment" x="-76" y="433">(cmd) = ((auto_rand_value1) % (2))</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id32"/>
+			<label kind="guard" x="17" y="306">(cmd) == (TLM_WRITE_COMMAND)</label>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id33"/>
+			<label kind="select" x="247" y="213">rand: int[0, 32767]</label>
+			<label kind="assignment" x="221" y="238">(auto_rand_value2) = (rand)</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id34"/>
+			<label kind="assignment" x="314" y="314">(intMem[(data) + ((i) % (16))]) = (auto_rand_value2)</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id34"/>
+			<label kind="guard" x="187" y="425">!((cmd) == (TLM_WRITE_COMMAND))</label>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id35"/>
+			<label kind="synchronisation" x="246" y="493">allocate_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id35"/>
+			<target ref="id36"/>
+			<label kind="synchronisation" x="161" y="782">allocate_ctrl?</label>
+			<label kind="assignment" x="161" y="586">(tran) = (allocate_return),
+(allocate_return) = (0),
+(payloadMem[tran].command) = (cmd),
+(payloadMem[tran].address) = (adr),
+(payloadMem[tran].data_ptr) = ((data) + ((i) % (16))),
+(payloadMem[tran].data_length) = (4),
+(payloadMem[tran].streaming_width) = (4),
+(payloadMem[tran].byte_enable_ptr) = (0),
+(payloadMem[tran].dmi_allowed) = (false),
+(payloadMem[tran].response_status) = (TLM_INCOMPLETE_RESPONSE)</label>
+		</transition>
+		<transition>
+			<source ref="id36"/>
+			<target ref="id37"/>
+			<label kind="guard" x="170" y="969">request_in_progress</label>
+		</transition>
+		<transition>
+			<source ref="id37"/>
+			<target ref="id38"/>
+			<label kind="synchronisation" x="263" y="1183">deactivate!</label>
+			<label kind="assignment" x="229" y="1198">readyprocs=readyprocs-1</label>
+		</transition>
+		<transition>
+			<source ref="id39"/>
+			<target ref="id40"/>
+			<label kind="synchronisation" x="357" y="943">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id38"/>
+			<target ref="id39"/>
+			<label kind="synchronisation" x="289" y="1062">end_request_event_wait?</label>
+			<label kind="assignment" x="280" y="1079">readyprocs=readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id36"/>
+			<target ref="id40"/>
+			<label kind="guard" x="238" y="858">!(request_in_progress)</label>
+		</transition>
+		<transition>
+			<source ref="id40"/>
+			<target ref="id41"/>
+			<label kind="assignment" x="382" y="773">(request_in_progress) = (tran),
+(intMem[phase]) = (BEGIN_REQ),
+(intMem[delay]) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id42"/>
+			<label kind="synchronisation" x="603" y="612">socket_nb_transport_fw_ctrl!</label>
+			<label kind="assignment" x="595" y="637">(socket_nb_transport_fw_param_tran) = (tran),
+(socket_nb_transport_fw_param_phase) = (phase),
+(socket_nb_transport_fw_param_t) = (delay)</label>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id43"/>
+			<label kind="synchronisation" x="748" y="824">socket_nb_transport_fw_ctrl?</label>
+			<label kind="assignment" x="705" y="714">(socket_nb_transport_fw_param_t) = (0),
+(socket_nb_transport_fw_param_phase) = (0),
+(socket_nb_transport_fw_param_tran) = (0),
+(status) = (socket_nb_transport_fw_return),
+(socket_nb_transport_fw_return) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id44"/>
+			<label kind="guard" x="756" y="926">(status) == (TLM_UPDATED)</label>
+		</transition>
+		<transition>
+			<source ref="id44"/>
+			<target ref="id45"/>
+			<label kind="synchronisation" x="756" y="1054">m_peq_peq_dispatcher_ctrl!</label>
+			<label kind="assignment" x="722" y="1071">(m_peq_peq_notify_param_delay) = (intMem[delay]),
+(m_peq_peq_notify_param_phase) = (phase),
+(m_peq_peq_notify_param_trans) = (tran)</label>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id50"/>
+			<label kind="synchronisation" x="816" y="1258">m_peq_peq_dispatcher_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id47"/>
+			<label kind="guard" x="391" y="969">(status) == (TLM_COMPLETED)</label>
+		</transition>
+		<transition>
+			<source ref="id47"/>
+			<target ref="id48"/>
+			<label kind="assignment" x="450" y="1096">(request_in_progress) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id48"/>
+			<target ref="id49"/>
+			<label kind="synchronisation" x="433" y="1190">check_transaction_ctrl!</label>
+			<label kind="assignment" x="416" y="1224">(check_transaction_param_tran) = (tran)</label>
+		</transition>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id50"/>
+			<label kind="synchronisation" x="569" y="1311">check_transaction_ctrl?</label>
+			<label kind="assignment" x="569" y="1326">(check_transaction_param_tran) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id50"/>
+			<label kind="guard" x="561" y="1020">!((status) == (TLM_COMPLETED))</label>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id46"/>
+			<label kind="guard" x="603" y="875">!((status) == (TLM_UPDATED))</label>
+		</transition>
+		<transition>
+			<source ref="id50"/>
+			<target ref="id51"/>
+			<label kind="synchronisation" x="663" y="1419">deactivate!</label>
+			<label kind="assignment" x="663" y="1434">readyprocs=readyprocs-1</label>
+		</transition>
+		<transition>
+			<source ref="id52"/>
+			<target ref="id25"/>
+			<label kind="synchronisation" x="59" y="1453">activate?</label>
+			<label kind="assignment" x="59" y="1470">i=i+1</label>
+		</transition>
+		<transition>
+			<source ref="id51"/>
+			<target ref="id53"/>
+			<label kind="synchronisation" x="414" y="1413">timeoutevent_notify!</label>
+			<label kind="assignment" x="408" y="1428">(timeoutevent_notify_t) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id53"/>
+			<target ref="id52"/>
+			<label kind="synchronisation" x="204" y="1421">timeoutevent_wait?</label>
+			<label kind="assignment" x="204" y="1436">readyprocs=readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id27"/>
+			<label kind="guard" x="416" y="1513">!((i) &lt; (1000))</label>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id54"/>
+			<label kind="synchronisation" x="1003" y="996">deactivate!</label>
+			<label kind="assignment" x="1003" y="1011">readyprocs=readyprocs-1</label>
+		</transition>
+		<transition>
+			<source ref="id55"/>
+			<target ref="id56"/>
+			<label kind="synchronisation" x="994" y="646">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id54"/>
+			<target ref="id57"/>
+			<label kind="synchronisation" x="1011" y="918">timeoutevent_notify!</label>
+			<label kind="assignment" x="994" y="884">(timeoutevent_notify_t) = (100)</label>
+		</transition>
+		<transition>
+			<source ref="id57"/>
+			<target ref="id55"/>
+			<label kind="synchronisation" x="1003" y="790">timeoutevent_wait?</label>
+			<label kind="assignment" x="994" y="773">readyprocs=readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id56"/>
+			<target ref="id58"/>
+			<label kind="synchronisation" x="994" y="552">allocate_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id58"/>
+			<target ref="id59"/>
+			<label kind="synchronisation" x="1003" y="231">allocate_ctrl?</label>
+			<label kind="assignment" x="1003" y="246">(tran) = (allocate_return),
+(allocate_return) = (0),
+(payloadMem[tran].command) = (TLM_WRITE_COMMAND),
+(payloadMem[tran].address) = (0),
+(payloadMem[tran].data_ptr) = ((data) + (0)),
+(payloadMem[tran].data_length) = (4),
+(payloadMem[tran].streaming_width) = (4),
+(payloadMem[tran].byte_enable_ptr) = (0),
+(payloadMem[tran].dmi_allowed) = (false),
+(payloadMem[tran].response_status) = (TLM_INCOMPLETE_RESPONSE),
+(intMem[delay]) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id59"/>
+			<target ref="id60"/>
+			<label kind="synchronisation" x="994" y="161">socket_b_transport_ctrl!</label>
+			<label kind="assignment" x="994" y="119">(socket_b_transport_param_tran) = (tran),
+(socket_b_transport_param_t) = (delay)</label>
+		</transition>
+		<transition>
+			<source ref="id60"/>
+			<target ref="id61"/>
+			<label kind="synchronisation" x="739" y="2">socket_b_transport_ctrl?</label>
+			<label kind="assignment" x="739" y="17">(socket_b_transport_param_t) = (0),
+(socket_b_transport_param_tran) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id61"/>
+			<target ref="id62"/>
+			<label kind="synchronisation" x="467" y="17">check_transaction_ctrl!</label>
+			<label kind="assignment" x="467" y="32">(check_transaction_param_tran) = (tran)</label>
+		</transition>
+		<transition>
+			<source ref="id62"/>
+			<target ref="id63"/>
+			<label kind="synchronisation" x="221" y="17">check_transaction_ctrl?</label>
+			<label kind="assignment" x="221" y="32">(check_transaction_param_tran) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id63"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="25" y="43">thread_process_ctrl!</label>
+			<label kind="assignment" x="25" y="-110">(tran) = (NULL),
+(i) = (0),
+(adr) = (0),
+(auto_rand_value0) = (0),
+(cmd) = (0),
+(auto_rand_value1) = (0),
+(auto_rand_value2) = (0),
+(status) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>SCEventTemplate</name>
+		<parameter>broadcast chan &amp;wait, chan &amp;notify, chan &amp;notify_imm, int &amp;notify_t</parameter>
+		<declaration>clock wait_clock;
+int ndelay;
+</declaration>
+		<location id="id64" x="-212" y="-25">
+			<name x="-289" y="-59">init_location_event</name>
+		</location>
+		<location id="id65" x="314" y="-25">
+			<name x="304" y="-55">notify_requested</name>
+			<committed/>
+		</location>
+		<location id="id66" x="314" y="255">
+			<name x="338" y="247">wait_for_delta</name>
+			<label kind="invariant" x="304" y="270">(wait_clock) &lt;= (ndelay)</label>
+		</location>
+		<location id="id67" x="-204" y="399">
+			<name x="-300" y="391">notify_now</name>
+			<committed/>
+		</location>
+		<location id="id68" x="76" y="620">
+			<name x="34" y="630">advancing_time</name>
+			<committed/>
+		</location>
+		<init ref="id64"/>
+		<transition>
+			<source ref="id64"/>
+			<target ref="id65"/>
+			<label kind="synchronisation" x="-110" y="-83">notify?</label>
+			<label kind="assignment" x="-110" y="-68">(ndelay) = (notify_t),
+(wait_clock) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id65"/>
+			<target ref="id66"/>
+			<label kind="guard" x="425" y="-17">((wait_clock) + (notify_t)) &lt; (ndelay)</label>
+			<label kind="assignment" x="425" y="0">(ndelay) = (notify_t),
+(wait_clock) = (0)</label>
+			<nail x="476" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id65"/>
+			<label kind="synchronisation" x="297" y="144">notify?</label>
+		</transition>
+		<transition>
+			<source ref="id65"/>
+			<target ref="id66"/>
+			<label kind="guard" x="144" y="102">((wait_clock) + (notify_t)) &gt;=  (ndelay)</label>
+			<nail x="237" y="122"/>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id67"/>
+			<label kind="guard" x="8" y="348">ndelay == 0</label>
+			<label kind="synchronisation" x="8" y="331">deltadelay?</label>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id67"/>
+			<label kind="guard" x="-102" y="408">((wait_clock) == (ndelay)) &amp;&amp; ((ndelay) != (0))</label>
+			<label kind="synchronisation" x="-85" y="425">advancetime!</label>
+			<nail x="59" y="442"/>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id68"/>
+			<label kind="guard" x="110" y="484">(ndelay) != (0)</label>
+			<label kind="synchronisation" x="119" y="510">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id68"/>
+			<target ref="id66"/>
+			<label kind="guard" x="246" y="544">(wait_clock) &lt; (ndelay)</label>
+			<nail x="314" y="610"/>
+		</transition>
+		<transition>
+			<source ref="id68"/>
+			<target ref="id67"/>
+			<label kind="guard" x="-144" y="518">(wait_clock) == (ndelay)</label>
+		</transition>
+		<transition>
+			<source ref="id67"/>
+			<target ref="id64"/>
+			<label kind="synchronisation" x="-280" y="121">wait!</label>
+			<label kind="assignment" x="-289" y="136">(wait_clock) = (0),
+(ndelay) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id67"/>
+			<label kind="synchronisation" x="-8" y="255">notify_imm?</label>
+			<nail x="152" y="208"/>
+		</transition>
+		<transition>
+			<source ref="id64"/>
+			<target ref="id67"/>
+			<label kind="synchronisation" x="-153" y="161">notify_imm?</label>
+			<nail x="-112" y="96"/>
+		</transition>
+	</template>
+	<template>
+		<name>SCEventTemplate1</name>
+		<parameter>broadcast chan &amp;wait1, chan &amp;notify1, chan &amp;notify_imm1, int &amp;notify_t1</parameter>
+		<declaration>clock wait_clock1;
+int ndelay1;
+</declaration>
+		<location id="id69" x="100" y="46">
+			<name x="23" y="12">init_location_event1</name>
+		</location>
+		<location id="id70" x="626" y="46">
+			<name x="616" y="16">notify_requested1</name>
+			<committed/>
+		</location>
+		<location id="id71" x="629" y="323">
+			<name x="657" y="311">wait_for_delta1</name>
+			<label kind="invariant" x="619" y="338">(wait_clock1) &lt;= (ndelay1)</label>
+		</location>
+		<location id="id72" x="108" y="470">
+			<name x="12" y="462">notify_now1</name>
+			<committed/>
+		</location>
+		<location id="id73" x="388" y="691">
+			<name x="346" y="701">advancing_time1</name>
+			<committed/>
+		</location>
+		<init ref="id69"/>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id70"/>
+			<label kind="synchronisation" x="204" y="-17">notify1?</label>
+			<label kind="assignment" x="204" y="0">(ndelay1) = (notify_t1),
+(wait_clock1) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id70"/>
+			<target ref="id71"/>
+			<label kind="guard" x="739" y="51">((wait_clock1) + (notify_t1)) &lt; (ndelay1)</label>
+			<label kind="assignment" x="737" y="71">(ndelay1) = (notify_t1),
+(wait_clock1) = (0)</label>
+			<nail x="788" y="147"/>
+		</transition>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id70"/>
+			<label kind="synchronisation" x="612" y="212">notify1?</label>
+		</transition>
+		<transition>
+			<source ref="id70"/>
+			<target ref="id71"/>
+			<label kind="guard" x="456" y="173">((wait_clock1) + (notify_t1)) &gt;= (ndelay1)</label>
+			<nail x="549" y="193"/>
+		</transition>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id72"/>
+			<label kind="guard" x="320" y="419">ndelay1 == 0</label>
+			<label kind="synchronisation" x="320" y="402">deltadelay?</label>
+		</transition>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id72"/>
+			<label kind="guard" x="210" y="479">((wait_clock1) == (ndelay1)) &amp;&amp; ((ndelay1) != (0))</label>
+			<label kind="synchronisation" x="227" y="496">advancetime!</label>
+			<nail x="371" y="513"/>
+		</transition>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id73"/>
+			<label kind="guard" x="422" y="555">(ndelay1) != (0)</label>
+			<label kind="synchronisation" x="431" y="581">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id73"/>
+			<target ref="id71"/>
+			<label kind="guard" x="558" y="615">(wait_clock1) &lt; (ndelay1)</label>
+			<nail x="626" y="681"/>
+		</transition>
+		<transition>
+			<source ref="id73"/>
+			<target ref="id72"/>
+			<label kind="guard" x="168" y="589">(wait_clock1) == (ndelay1)</label>
+		</transition>
+		<transition>
+			<source ref="id72"/>
+			<target ref="id69"/>
+			<label kind="synchronisation" x="32" y="192">wait1!</label>
+			<label kind="assignment" x="23" y="207">(wait_clock1) = (0),
+(ndelay1) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id72"/>
+			<label kind="synchronisation" x="304" y="326">notify_imm1?</label>
+			<nail x="464" y="279"/>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id72"/>
+			<label kind="synchronisation" x="159" y="232">notify_imm1?</label>
+			<nail x="200" y="167"/>
+		</transition>
+	</template>
+	<template>
+		<name>SchedulerTemplate</name>
+		<location id="id74" x="187" y="-144">
+			<name x="147" y="-176">execute</name>
+			<urgent/>
+		</location>
+		<location id="id75" x="192" y="8">
+			<name x="212" y="-8">evaluate</name>
+			<urgent/>
+		</location>
+		<location id="id76" x="195" y="229">
+			<name x="221" y="212">update</name>
+			<urgent/>
+		</location>
+		<location id="id77" x="195" y="382">
+			<name x="171" y="400">updating</name>
+			<urgent/>
+		</location>
+		<location id="id78" x="-187" y="229">
+			<name x="-212" y="238">nextdelta</name>
+			<urgent/>
+		</location>
+		<location id="id79" x="-187" y="8">
+			<name x="-229" y="-34">time_progress</name>
+		</location>
+		<init ref="id75"/>
+		<transition>
+			<source ref="id75"/>
+			<target ref="id74"/>
+			<label kind="guard" x="238" y="-102">(readyprocs) &gt; (0)</label>
+			<label kind="synchronisation" x="263" y="-88">activate!</label>
+			<nail x="238" y="-76"/>
+		</transition>
+		<transition>
+			<source ref="id74"/>
+			<target ref="id75"/>
+			<label kind="synchronisation" x="68" y="-102">deactivate?</label>
+			<nail x="136" y="-68"/>
+		</transition>
+		<transition>
+			<source ref="id75"/>
+			<target ref="id76"/>
+			<label kind="guard" x="212" y="51">(readyprocs) == (0)</label>
+			<label kind="assignment" x="204" y="85">(deltacount) = (((deltacount) + (1)) % (2))</label>
+		</transition>
+		<transition>
+			<source ref="id76"/>
+			<target ref="id77"/>
+			<label kind="guard" x="8" y="272">(updaterequests) &gt; (0)</label>
+			<label kind="synchronisation" x="42" y="297">updatestart!</label>
+			<nail x="144" y="306"/>
+		</transition>
+		<transition>
+			<source ref="id77"/>
+			<target ref="id76"/>
+			<label kind="synchronisation" x="238" y="272">updateend?</label>
+			<nail x="238" y="306"/>
+		</transition>
+		<transition>
+			<source ref="id76"/>
+			<target ref="id78"/>
+			<label kind="guard" x="-68" y="187">(updaterequests) == (0)</label>
+			<label kind="synchronisation" x="-51" y="204">deltadelay!</label>
+		</transition>
+		<transition>
+			<source ref="id78"/>
+			<target ref="id79"/>
+			<label kind="guard" x="-331" y="93">(readyprocs) == (0)</label>
+		</transition>
+		<transition>
+			<source ref="id78"/>
+			<target ref="id75"/>
+			<label kind="guard" x="-85" y="85">(readyprocs) &gt; (0)</label>
+		</transition>
+		<transition>
+			<source ref="id79"/>
+			<target ref="id75"/>
+			<label kind="synchronisation" x="-59" y="-25">advancetime?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Target_b_transport</name>
+		<parameter>chan &amp;b_transport_ctrl</parameter>
+		<location id="id80" x="40" y="80">
+			<name x="-51" y="42">init_location_target_b_transport</name>
+		</location>
+		<location id="id81" x="320" y="80">
+			<name x="310" y="46">target_b_transport</name>
+			<urgent/>
+		</location>
+		<init ref="id80"/>
+		<transition>
+			<source ref="id80"/>
+			<target ref="id81"/>
+			<label kind="synchronisation" x="120" y="56">b_transport_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id81"/>
+			<target ref="id80"/>
+			<label kind="synchronisation" x="120" y="144">b_transport_ctrl!</label>
+			<nail x="176" y="144"/>
+		</transition>
+	</template>
+	<template>
+		<name>Target_nb_transport_fw</name>
+		<parameter>chan &amp;m_peq_peq_dispatcher_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;m_peq_peq_notify_param_trans, int[-1, INT_MEMSIZE-1] &amp;m_peq_peq_notify_param_phase, int &amp;m_peq_peq_notify_param_delay, chan &amp;nb_transport_fw_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;nb_transport_fw_param_tran, int[-1, INT_MEMSIZE-1] &amp;nb_transport_fw_param_phase, int[-1, INT_MEMSIZE-1] &amp;nb_transport_fw_param_t, int &amp;nb_transport_fw_return</parameter>
+		<declaration>int adr;
+int len;
+int[-1, INT_MEMSIZE-1] byt := NULL;
+int wid;
+</declaration>
+		<location id="id82" x="40" y="80">
+			<name x="-25" y="42">init_location_nb_fw</name>
+		</location>
+		<location id="id83" x="296" y="80">
+			<name x="286" y="46">nb_fw1</name>
+			<urgent/>
+		</location>
+		<location id="id84" x="296" y="264">
+			<name x="323" y="238">nb_fw6</name>
+			<urgent/>
+		</location>
+		<location id="id85" x="40" y="264">
+			<name x="51" y="229">nb_fw5</name>
+			<urgent/>
+		</location>
+		<location id="id86" x="472" y="80">
+			<name x="484" y="85">nb_fw2</name>
+			<urgent/>
+		</location>
+		<location id="id87" x="624" y="80">
+			<name x="614" y="46">nb_fw3</name>
+			<urgent/>
+		</location>
+		<location id="id88" x="629" y="-59">
+			<name x="619" y="-93">nb_fw4</name>
+			<urgent/>
+		</location>
+		<location id="id89" x="472" y="416">
+			<name x="501" y="408">nb_fw7</name>
+			<urgent/>
+		</location>
+		<location id="id90" x="-221" y="416">
+			<name x="-231" y="382">nb_fw8</name>
+			<urgent/>
+		</location>
+		<location id="id91" x="-221" y="85">
+			<name x="-231" y="51">nb_fw9</name>
+			<urgent/>
+		</location>
+		<init ref="id82"/>
+		<transition>
+			<source ref="id82"/>
+			<target ref="id83"/>
+			<label kind="synchronisation" x="112" y="64">nb_transport_fw_ctrl?</label>
+			<label kind="assignment" x="48" y="88">(adr) = (payloadMem[nb_transport_fw_param_tran].address),
+(len) = (payloadMem[nb_transport_fw_param_tran].data_length),
+(byt) = (payloadMem[nb_transport_fw_param_tran].byte_enable_ptr),
+(wid) = (payloadMem[nb_transport_fw_param_tran].streaming_width)</label>
+		</transition>
+		<transition>
+			<source ref="id83"/>
+			<target ref="id84"/>
+			<label kind="guard" x="264" y="216">(byt) != (0)</label>
+		</transition>
+		<transition>
+			<source ref="id84"/>
+			<target ref="id85"/>
+			<label kind="assignment" x="0" y="272">(payloadMem[nb_transport_fw_param_tran].response_status)=(TLM_BYTE_ENABLE_ERROR_RESPONSE)</label>
+		</transition>
+		<transition>
+			<source ref="id85"/>
+			<target ref="id82"/>
+			<label kind="synchronisation" x="-102" y="153">nb_transport_fw_ctrl!</label>
+			<label kind="assignment" x="-102" y="170">(nb_transport_fw_return) = (TLM_COMPLETED),
+(adr) = (0),
+(len) = (0),
+(byt) = (NULL),
+(wid) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id83"/>
+			<target ref="id86"/>
+			<label kind="guard" x="336" y="64">!((byt) != (0))</label>
+		</transition>
+		<transition>
+			<source ref="id86"/>
+			<target ref="id87"/>
+			<label kind="guard" x="456" y="48">((len) &gt; (4)) || ((wid) &lt; (len))</label>
+		</transition>
+		<transition>
+			<source ref="id87"/>
+			<target ref="id88"/>
+			<label kind="assignment" x="456" y="-8">(payloadMem[nb_transport_fw_param_tran].response_status)=(TLM_BURST_ERROR_RESPONSE)</label>
+		</transition>
+		<transition>
+			<source ref="id88"/>
+			<target ref="id82"/>
+			<label kind="synchronisation" x="263" y="-110">nb_transport_fw_ctrl!</label>
+			<label kind="assignment" x="263" y="-93">(nb_transport_fw_return) = (TLM_COMPLETED),
+(adr) = (0),
+(len) = (0),
+(byt) = (NULL),
+(wid) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id86"/>
+			<target ref="id89"/>
+			<label kind="guard" x="408" y="360">!(((len) &gt; (4)) || ((wid) &lt; (len)))</label>
+		</transition>
+		<transition>
+			<source ref="id89"/>
+			<target ref="id90"/>
+			<label kind="synchronisation" x="104" y="392">m_peq_peq_dispatcher_ctrl!</label>
+			<label kind="assignment" x="-8" y="424">(m_peq_peq_notify_param_delay) = (intMem[nb_transport_fw_param_t]),
+(m_peq_peq_notify_param_phase) = (nb_transport_fw_param_phase),
+(m_peq_peq_notify_param_trans) = (nb_transport_fw_param_tran),
+delaycheck[ntransaction],
+ntransaction = ntransaction+1</label>
+		</transition>
+		<transition>
+			<source ref="id90"/>
+			<target ref="id91"/>
+			<label kind="synchronisation" x="-120" y="352">m_peq_peq_dispatcher_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id91"/>
+			<target ref="id82"/>
+			<label kind="synchronisation" x="-170" y="-50">nb_transport_fw_ctrl!</label>
+			<label kind="assignment" x="-170" y="-34">(nb_transport_fw_return) =(TLM_ACCEPTED),
+(adr) = (0),
+(len) = (0),
+(byt) = (NULL),
+(wid) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>Target_peq_cb</name>
+		<parameter>int &amp;n_trans, int &amp;response_in_progress, int[-1, PAYLOAD_MEMSIZE-1] &amp;next_response_pending, int[-1, PAYLOAD_MEMSIZE-1] &amp;end_req_pending, chan &amp;peq_cb_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_cb_param_tran, int[-1, INT_MEMSIZE-1] &amp;peq_cb_param_phase</parameter>
+		<declaration>int status;
+int delay;
+int switch0;
+int cmd;
+int adr;
+int[-1, INT_MEMSIZE-1] ptr := NULL;
+int len;
+int auto_rand_value0;
+</declaration>
+		<location id="id92" x="246" y="-93">
+			<name x="144" y="-85">init_location_target_peq</name>
+		</location>
+		<location id="id93" x="110" y="425">
+			<name x="127" y="408">T_peq1</name>
+			<urgent/>
+		</location>
+		<location id="id94" x="484" y="-255">
+			<name x="474" y="-289">T_peq6</name>
+			<urgent/>
+		</location>
+		<location id="id95" x="-34" y="425">
+			<name x="-34" y="433">T_peq2</name>
+			<urgent/>
+		</location>
+		<location id="id96" x="110" y="620">
+			<name x="100" y="586">T_peq8</name>
+			<urgent/>
+		</location>
+		<location id="id97" x="-34" y="204">
+			<name x="-44" y="170">T_peq3</name>
+		</location>
+		<location id="id98" x="-42" y="0">
+			<name x="-52" y="-34">T_peq4</name>
+			<urgent/>
+		</location>
+		<location id="id99" x="8" y="-161">
+			<name x="-2" y="-195">T_peq7</name>
+			<urgent/>
+		</location>
+		<location id="id100" x="127" y="-93">
+			<name x="117" y="-127">T_peq5</name>
+			<urgent/>
+		</location>
+		<location id="id101" x="110" y="756">
+			<name x="100" y="722">T_peq9</name>
+			<urgent/>
+		</location>
+		<location id="id102" x="391" y="212">
+			<name x="381" y="178">T_peq16</name>
+			<urgent/>
+		</location>
+		<location id="id103" x="-187" y="756">
+			<name x="-197" y="722">T_peq10</name>
+			<urgent/>
+		</location>
+		<location id="id104" x="-187" y="620">
+			<name x="-197" y="586">T_peq11</name>
+		</location>
+		<location id="id105" x="-178" y="425">
+			<name x="-188" y="391">T_peq12</name>
+			<urgent/>
+		</location>
+		<location id="id106" x="-212" y="246">
+			<name x="-222" y="212">T_peq13</name>
+			<urgent/>
+		</location>
+		<location id="id107" x="-170" y="68">
+			<name x="-180" y="34">T_peq14</name>
+			<urgent/>
+		</location>
+		<location id="id108" x="-170" y="-238">
+			<name x="-180" y="-272">T_peq15</name>
+			<urgent/>
+		</location>
+		<location id="id109" x="535" y="204">
+			<name x="525" y="170">T_peq17</name>
+			<urgent/>
+		</location>
+		<location id="id110" x="637" y="357">
+			<name x="627" y="323">T_peq18</name>
+			<urgent/>
+		</location>
+		<location id="id111" x="918" y="357">
+			<name x="908" y="323">T_peq19</name>
+			<urgent/>
+		</location>
+		<location id="id112" x="1147" y="595">
+			<name x="1137" y="561">T_peq20</name>
+			<urgent/>
+		</location>
+		<location id="id113" x="1147" y="323">
+			<name x="1137" y="289">T_peq21</name>
+			<urgent/>
+		</location>
+		<location id="id114" x="1139" y="42">
+			<name x="1129" y="8">T_peq27</name>
+			<urgent/>
+		</location>
+		<location id="id115" x="1139" y="-255">
+			<name x="1129" y="-289">T_peq28</name>
+			<urgent/>
+		</location>
+		<location id="id116" x="1011" y="25">
+			<name x="1001" y="-9">T_peq22</name>
+			<urgent/>
+		</location>
+		<location id="id117" x="833" y="25">
+			<name x="823" y="-9">T_peq23</name>
+			<urgent/>
+		</location>
+		<location id="id118" x="756" y="-255">
+			<name x="746" y="-289">T_peq24</name>
+			<urgent/>
+		</location>
+		<location id="id119" x="765" y="17">
+			<name x="755" y="-17">T_peq25</name>
+			<urgent/>
+		</location>
+		<location id="id120" x="705" y="-102">
+			<name x="695" y="-136">T_peq26</name>
+			<urgent/>
+		</location>
+		<init ref="id92"/>
+		<transition>
+			<source ref="id92"/>
+			<target ref="id93"/>
+			<label kind="synchronisation" x="59" y="153">peq_cb_ctrl?</label>
+			<label kind="assignment" x="59" y="178">(switch0) = (intMem[peq_cb_param_phase])</label>
+		</transition>
+		<transition>
+			<source ref="id93"/>
+			<target ref="id95"/>
+			<label kind="guard" x="-51" y="382">(switch0) == (BEGIN_REQ)</label>
+		</transition>
+		<transition>
+			<source ref="id93"/>
+			<target ref="id96"/>
+			<label kind="guard" x="-8" y="467">!((switch0) == (BEGIN_REQ))</label>
+		</transition>
+		<transition>
+			<source ref="id95"/>
+			<target ref="id97"/>
+			<label kind="synchronisation" x="-85" y="323">tran_acquire_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id97"/>
+			<target ref="id98"/>
+			<label kind="synchronisation" x="-110" y="34">tran_acquire_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id98"/>
+			<target ref="id99"/>
+			<label kind="guard" x="-59" y="-136">(n_trans) == (2)</label>
+		</transition>
+		<transition>
+			<source ref="id99"/>
+			<target ref="id94"/>
+			<label kind="assignment" x="85" y="-212">(end_req_pending) = (peq_cb_param_tran)</label>
+		</transition>
+		<transition>
+			<source ref="id100"/>
+			<target ref="id94"/>
+			<label kind="guard" x="212" y="-153">(status) == (TLM_COMPLETED)</label>
+		</transition>
+		<transition>
+			<source ref="id100"/>
+			<target ref="id94"/>
+			<label kind="guard" x="127" y="-187">!((status) == (TLM_COMPLETED))</label>
+			<nail x="246" y="-178"/>
+		</transition>
+		<transition>
+			<source ref="id98"/>
+			<target ref="id100"/>
+			<label kind="guard" x="8" y="-68">!((n_trans) == (2))</label>
+		</transition>
+		<transition>
+			<source ref="id96"/>
+			<target ref="id101"/>
+			<label kind="guard" x="76" y="671">(switch0) == (END_RESP)</label>
+		</transition>
+		<transition>
+			<source ref="id96"/>
+			<target ref="id102"/>
+			<label kind="guard" x="178" y="442">!((switch0) == (END_RESP))</label>
+		</transition>
+		<transition>
+			<source ref="id101"/>
+			<target ref="id103"/>
+			<label kind="guard" x="-110" y="756">!(response_in_progress)</label>
+		</transition>
+		<transition>
+			<source ref="id101"/>
+			<target ref="id103"/>
+			<label kind="guard" x="-102" y="705">!(!(response_in_progress))</label>
+			<nail x="17" y="714"/>
+		</transition>
+		<transition>
+			<source ref="id103"/>
+			<target ref="id104"/>
+			<label kind="synchronisation" x="-246" y="680">tran_release_ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id104"/>
+			<target ref="id105"/>
+			<label kind="synchronisation" x="-238" y="503">tran_release_ctrl?</label>
+			<label kind="assignment" x="-238" y="518">n_trans = n_trans-1,
+response_in_progress = false</label>
+		</transition>
+		<transition>
+			<source ref="id105"/>
+			<target ref="id106"/>
+			<label kind="guard" x="-357" y="323">next_response_pending</label>
+		</transition>
+		<transition>
+			<source ref="id106"/>
+			<target ref="id107"/>
+			<label kind="assignment" x="-399" y="136">(next_response_pending) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id105"/>
+			<target ref="id107"/>
+			<label kind="guard" x="-204" y="255">!(next_response_pending)</label>
+		</transition>
+		<transition>
+			<source ref="id107"/>
+			<target ref="id108"/>
+			<label kind="guard" x="-297" y="-110">end_req_pending</label>
+		</transition>
+		<transition>
+			<source ref="id108"/>
+			<target ref="id94"/>
+			<label kind="assignment" x="-25" y="-263">(end_req_pending) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id107"/>
+			<target ref="id94"/>
+			<label kind="guard" x="-119" y="-212">!(end_req_pending)</label>
+			<nail x="-76" y="-187"/>
+		</transition>
+		<transition>
+			<source ref="id102"/>
+			<target ref="id94"/>
+			<label kind="guard" x="323" y="-76">(switch0) == (END_REQ)</label>
+		</transition>
+		<transition>
+			<source ref="id102"/>
+			<target ref="id109"/>
+			<label kind="guard" x="365" y="229">!((switch0) == (END_REQ))</label>
+		</transition>
+		<transition>
+			<source ref="id109"/>
+			<target ref="id94"/>
+			<label kind="guard" x="459" y="-8">(switch0) == (BEGIN_RESP)</label>
+		</transition>
+		<transition>
+			<source ref="id109"/>
+			<target ref="id110"/>
+			<label kind="guard" x="578" y="289">!((switch0) == (BEGIN_RESP))</label>
+		</transition>
+		<transition>
+			<source ref="id110"/>
+			<target ref="id111"/>
+			<label kind="guard" x="374" y="374">(((!((switch0) == (BEGIN_REQ))) &amp;&amp; (!((switch0) == (END_RESP)))) &amp;&amp; (!((switch0) == (END_REQ)))) &amp;&amp; (!((switch0) == (BEGIN_RESP)))</label>
+		</transition>
+		<transition>
+			<source ref="id110"/>
+			<target ref="id94"/>
+			<label kind="guard" x="535" y="144">!((((!((switch0) == (BEGIN_REQ))) &amp;&amp; (!((switch0) == (END_RESP)))) &amp;&amp; (!((switch0) == (END_REQ)))) &amp;&amp; (!((switch0) == (BEGIN_RESP))))</label>
+		</transition>
+		<transition>
+			<source ref="id111"/>
+			<target ref="id112"/>
+			<label kind="guard" x="739" y="399">(intMem[peq_cb_param_phase]) == (2222)</label>
+		</transition>
+		<transition>
+			<source ref="id112"/>
+			<target ref="id113"/>
+			<label kind="assignment" x="1045" y="357">(cmd) = (payloadMem[peq_cb_param_tran].command),
+(adr) = (payloadMem[peq_cb_param_tran].address),
+(ptr) = (payloadMem[peq_cb_param_tran].data_ptr),
+(len) = (payloadMem[peq_cb_param_tran].data_length)</label>
+		</transition>
+		<transition>
+			<source ref="id113"/>
+			<target ref="id114"/>
+			<label kind="guard" x="1088" y="76">(cmd) == (TLM_READ_COMMAND)</label>
+		</transition>
+		<transition>
+			<source ref="id114"/>
+			<target ref="id115"/>
+			<label kind="select" x="1156" y="-238">rand: int[0, 32767]</label>
+			<label kind="assignment" x="1156" y="-193">(auto_rand_value0) = (rand)</label>
+		</transition>
+		<transition>
+			<source ref="id115"/>
+			<target ref="id118"/>
+			<label kind="assignment" x="782" y="-280">(intMem[ptr]) = (auto_rand_value0)</label>
+		</transition>
+		<transition>
+			<source ref="id116"/>
+			<target ref="id117"/>
+			<label kind="guard" x="765" y="51">(cmd) == (TLM_WRITE_COMMAND)</label>
+		</transition>
+		<transition>
+			<source ref="id117"/>
+			<target ref="id118"/>
+			<label kind="assignment" x="739" y="-51">(payloadMem[peq_cb_param_tran].response_status) = (TLM_OK_RESPONSE)</label>
+		</transition>
+		<transition>
+			<source ref="id116"/>
+			<target ref="id118"/>
+			<label kind="guard" x="841" y="-85">!((cmd) == (TLM_WRITE_COMMAND))</label>
+		</transition>
+		<transition>
+			<source ref="id113"/>
+			<target ref="id116"/>
+			<label kind="guard" x="909" y="127">!((cmd) == (TLM_READ_COMMAND))</label>
+		</transition>
+		<transition>
+			<source ref="id118"/>
+			<target ref="id119"/>
+			<label kind="guard" x="637" y="-170">response_in_progress</label>
+		</transition>
+		<transition>
+			<source ref="id119"/>
+			<target ref="id120"/>
+			<label kind="guard" x="671" y="-76">next_response_pending</label>
+		</transition>
+		<transition>
+			<source ref="id119"/>
+			<target ref="id120"/>
+			<label kind="guard" x="595" y="-34">!(next_response_pending)</label>
+			<nail x="705" y="-25"/>
+		</transition>
+		<transition>
+			<source ref="id120"/>
+			<target ref="id94"/>
+			<label kind="assignment" x="527" y="-221">(next_response_pending) = (peq_cb_param_tran)</label>
+		</transition>
+		<transition>
+			<source ref="id118"/>
+			<target ref="id94"/>
+			<label kind="guard" x="552" y="-289">!(response_in_progress)</label>
+		</transition>
+		<transition>
+			<source ref="id111"/>
+			<target ref="id94"/>
+			<label kind="guard" x="722" y="212">!((intMem[peq_cb_param_phase]) == (2222))</label>
+		</transition>
+		<transition>
+			<source ref="id94"/>
+			<target ref="id92"/>
+			<label kind="synchronisation" x="374" y="-187">peq_cb_ctrl!</label>
+			<label kind="assignment" x="280" y="-51">(status) = (0),
+(delay) = (0),
+(switch0) = (0),
+(cmd) = (0),
+(adr) = (0),
+(ptr) = (NULL),
+(len) = (0),
+(auto_rand_value0) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>ThreadStarterTemplate</name>
+		<parameter>chan &amp;ctrl</parameter>
+		<location id="id121" x="85" y="76">
+			<name x="25" y="93">thread_starter1</name>
+			<urgent/>
+		</location>
+		<location id="id122" x="204" y="76">
+			<name x="161" y="93">thread_starter2</name>
+			<urgent/>
+		</location>
+		<location id="id123" x="314" y="76">
+			<name x="297" y="93">thread_starter3</name>
+		</location>
+		<location id="id124" x="569" y="76">
+			<name x="484" y="93">thread_starter4</name>
+			<urgent/>
+		</location>
+		<location id="id125" x="688" y="76">
+			<name x="688" y="85">thread_starter5</name>
+		</location>
+		<init ref="id121"/>
+		<transition>
+			<source ref="id121"/>
+			<target ref="id122"/>
+			<label kind="synchronisation" x="119" y="51">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id122"/>
+			<target ref="id123"/>
+			<label kind="synchronisation" x="255" y="51">ctrl!</label>
+		</transition>
+		<transition>
+			<source ref="id123"/>
+			<target ref="id124"/>
+			<label kind="synchronisation" x="340" y="34">ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id124"/>
+			<target ref="id125"/>
+			<label kind="synchronisation" x="595" y="85">deactivate!</label>
+			<label kind="assignment" x="340" y="51">readyprocs = readyprocs -1</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_dispatcher_payload</name>
+		<parameter>chan &amp;peq_dispatcher_ctrl, chan &amp;peq_notify_ctrl[4], bool &amp;peqInUse[4]</parameter>
+		<declaration>int[-1, 3] index := -1;
+int[-1, 3] i := 0;
+int[-1, 3] getIndex() {
+	for (i = 0; i &lt; 4; i++) {
+		if (!peqInUse[i]) {
+			return i;
+		}
+	}
+	return -1;
+}
+</declaration>
+		<location id="id126" x="-178" y="85">
+			<name x="-188" y="51">peq_dispatcher1</name>
+		</location>
+		<location id="id127" x="197" y="81">
+			<name x="187" y="51">peq_dispatcher_invoked</name>
+			<urgent/>
+		</location>
+		<location id="id128" x="195" y="357">
+			<name x="170" y="365">peq_dispatcher2</name>
+			<urgent/>
+		</location>
+		<init ref="id126"/>
+		<transition>
+			<source ref="id126"/>
+			<target ref="id127"/>
+			<label kind="synchronisation" x="-59" y="59">peq_dispatcher_ctrl?</label>
+			<label kind="assignment" x="-52" y="83">(index) = (getIndex())</label>
+		</transition>
+		<transition>
+			<source ref="id127"/>
+			<target ref="id128"/>
+			<label kind="synchronisation" x="161" y="255">peq_notify_ctrl[index]!</label>
+		</transition>
+		<transition>
+			<source ref="id128"/>
+			<target ref="id126"/>
+			<label kind="synchronisation" x="-68" y="172">peq_dispatcher_ctrl!</label>
+			<label kind="assignment" x="-68" y="187">(index) = (-1),
+(i) = (0),
+(index) = (0),
+(i) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_dispatcher_payload1</name>
+		<parameter>chan &amp;peq_dispatcher_ctrl1, chan &amp;peq_notify_ctrl1[4], bool &amp;peqInUse1[4]</parameter>
+		<declaration>int[-1, 3] index1 := -1;
+int[-1, 3] i1 := 0;
+int[-1, 3] getIndex() {
+	for (i1 = 0; i1 &lt; 4; i1++) {
+		if (!peqInUse1[i1]) {
+			return i1;
+		}
+	}
+	return -1;
+}
+</declaration>
+		<location id="id129" x="24" y="22">
+			<name x="-59" y="-25">peq_dispatcher1_1</name>
+		</location>
+		<location id="id130" x="399" y="18">
+			<name x="389" y="-12">peq_dispatcher_invoked_1</name>
+			<urgent/>
+		</location>
+		<location id="id131" x="397" y="294">
+			<name x="372" y="302">peq_dispatcher2_1</name>
+			<urgent/>
+		</location>
+		<init ref="id129"/>
+		<transition>
+			<source ref="id129"/>
+			<target ref="id130"/>
+			<label kind="synchronisation" x="144" y="-8">peq_dispatcher_ctrl1?</label>
+			<label kind="assignment" x="150" y="20">(index1) = (getIndex())</label>
+		</transition>
+		<transition>
+			<source ref="id130"/>
+			<target ref="id131"/>
+			<label kind="synchronisation" x="363" y="192">peq_notify_ctrl1[index1]!</label>
+		</transition>
+		<transition>
+			<source ref="id131"/>
+			<target ref="id129"/>
+			<label kind="synchronisation" x="134" y="109">peq_dispatcher_ctrl1!</label>
+			<label kind="assignment" x="134" y="124">(index1) = (-1),
+(i1) = (0),
+(index1) = (0),
+(i1) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_fetch_payload</name>
+		<parameter>chan &amp;peq_fetch_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase, chan &amp;peq_cb_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_cb_param_tran, int[-1, INT_MEMSIZE-1] &amp;peq_cb_param_phase</parameter>
+		<location id="id132" x="40" y="80">
+			<name x="-17" y="42">peq_fetch1</name>
+		</location>
+		<location id="id133" x="190" y="80">
+			<name x="180" y="46">peq_fetch2</name>
+			<urgent/>
+		</location>
+		<location id="id134" x="187" y="229">
+			<name x="178" y="246">peq_fetch3</name>
+		</location>
+		<location id="id135" x="40" y="230">
+			<name x="30" y="196">peq_fetch4</name>
+			<urgent/>
+		</location>
+		<init ref="id132"/>
+		<transition>
+			<source ref="id132"/>
+			<target ref="id133"/>
+			<label kind="synchronisation" x="72" y="56">peq_fetch_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id133"/>
+			<target ref="id134"/>
+			<label kind="synchronisation" x="130" y="140">peq_cb_ctrl!</label>
+			<label kind="assignment" x="127" y="153">(peq_cb_param_tran) = (peq_fetch_param_tran),
+(peq_cb_param_phase) = (peq_fetch_param_phase)</label>
+		</transition>
+		<transition>
+			<source ref="id134"/>
+			<target ref="id135"/>
+			<label kind="synchronisation" x="72" y="208">peq_cb_ctrl?</label>
+		</transition>
+		<transition>
+			<source ref="id135"/>
+			<target ref="id132"/>
+			<label kind="synchronisation" x="-20" y="140">deactivate!</label>
+			<label kind="assignment" x="-76" y="161">readyprocs = readyprocs -1</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_fetch_payload1</name>
+		<parameter>chan &amp;peq_fetch_ctrl1, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran1, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase1, chan &amp;peq_cb_ctrl1, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_cb_param_tran1, int[-1, INT_MEMSIZE-1] &amp;peq_cb_param_phase1</parameter>
+		<location id="id136" x="128" y="26">
+			<name x="71" y="-12">peq_fetch1_1</name>
+		</location>
+		<location id="id137" x="278" y="26">
+			<name x="268" y="-8">peq_fetch2_1</name>
+			<urgent/>
+		</location>
+		<location id="id138" x="275" y="175">
+			<name x="266" y="192">peq_fetch3_1</name>
+		</location>
+		<location id="id139" x="128" y="176">
+			<name x="85" y="195">peq_fetch4_1</name>
+			<urgent/>
+		</location>
+		<init ref="id136"/>
+		<transition>
+			<source ref="id136"/>
+			<target ref="id137"/>
+			<label kind="synchronisation" x="160" y="2">peq_fetch_ctrl1?</label>
+		</transition>
+		<transition>
+			<source ref="id137"/>
+			<target ref="id138"/>
+			<label kind="synchronisation" x="218" y="86">peq_cb_ctrl1!</label>
+			<label kind="assignment" x="215" y="99">(peq_cb_param_tran1) = (peq_fetch_param_tran1),
+(peq_cb_param_phase1) = (peq_fetch_param_phase1)</label>
+		</transition>
+		<transition>
+			<source ref="id138"/>
+			<target ref="id139"/>
+			<label kind="synchronisation" x="160" y="154">peq_cb_ctrl1?</label>
+		</transition>
+		<transition>
+			<source ref="id139"/>
+			<target ref="id136"/>
+			<label kind="synchronisation" x="68" y="86">deactivate!</label>
+			<label kind="assignment" x="12" y="107">readyprocs = readyprocs -1</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload</name>
+		<parameter>chan &amp;peq_notify_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase, int &amp;peq_notify_param_delay, chan &amp;peq_fetch_ctrl, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase, bool &amp;peqInUse, const int phase</parameter>
+		<declaration>int delay;
+clock c;
+int payload;
+</declaration>
+		<location id="id140" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify</name>
+		</location>
+		<location id="id141" x="-152" y="24">
+			<name x="-238" y="-8">peq_notify1</name>
+			<label kind="invariant" x="-255" y="17">(c) &lt;= (delay)</label>
+		</location>
+		<location id="id142" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2</name>
+			<committed/>
+		</location>
+		<location id="id143" x="192" y="24">
+			<name x="170" y="42">peq_notify3</name>
+			<committed/>
+		</location>
+		<location id="id144" x="296" y="24">
+			<name x="314" y="34">peq_notify4</name>
+			<urgent/>
+		</location>
+		<location id="id145" x="296" y="240">
+			<name x="297" y="255">peq_notify5</name>
+			<urgent/>
+		</location>
+		<init ref="id140"/>
+		<transition>
+			<source ref="id140"/>
+			<target ref="id141"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl?</label>
+			<label kind="assignment" x="-221" y="127">(payload) = (peq_notify_param_trans),
+(intMem[phase]) = (intMem[peq_notify_param_phase]),
+(delay) = (peq_notify_param_delay),
+(peqInUse) = (true),
+(c) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id141"/>
+			<target ref="id142"/>
+			<label kind="guard" x="-92" y="-101">(delay) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id142"/>
+			<target ref="id141"/>
+			<label kind="guard" x="-153" y="-161">(c) &lt; (delay)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id142"/>
+			<target ref="id143"/>
+			<label kind="guard" x="93" y="-102">(c) == (delay)</label>
+		</transition>
+		<transition>
+			<source ref="id141"/>
+			<target ref="id143"/>
+			<label kind="guard" x="-34" y="-15">(delay) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id141"/>
+			<target ref="id143"/>
+			<label kind="guard" x="-95" y="28">((delay) != (0)) &amp;&amp; ((c) == (delay))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id143"/>
+			<target ref="id144"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id144"/>
+			<target ref="id145"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id145"/>
+			<target ref="id140"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran) = (payload),
+(peq_fetch_param_phase) = (phase),
+(peqInUse) = (false),
+(delay) = (0),
+(payload) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload1</name>
+		<parameter>chan &amp;peq_notify_ctrl1, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans1, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase1, int &amp;peq_notify_param_delay1, chan &amp;peq_fetch_ctrl1, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran1, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase1, bool &amp;peqInUse1, const int phase1</parameter>
+		<declaration>int delay1;
+clock c1;
+int payload1;
+</declaration>
+		<location id="id146" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify_1</name>
+		</location>
+		<location id="id147" x="-152" y="24">
+			<name x="-263" y="-8">peq_notify1_1</name>
+			<label kind="invariant" x="-255" y="17">(c1) &lt;= (delay1)</label>
+		</location>
+		<location id="id148" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2_1</name>
+			<committed/>
+		</location>
+		<location id="id149" x="192" y="24">
+			<name x="170" y="42">peq_notify3_1</name>
+			<committed/>
+		</location>
+		<location id="id150" x="296" y="24">
+			<name x="314" y="34">peq_notify4_1</name>
+			<urgent/>
+		</location>
+		<location id="id151" x="296" y="240">
+			<name x="297" y="255">peq_notify5_1</name>
+			<urgent/>
+		</location>
+		<init ref="id146"/>
+		<transition>
+			<source ref="id146"/>
+			<target ref="id147"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl1?</label>
+			<label kind="assignment" x="-221" y="127">(payload1) = (peq_notify_param_trans1),
+(intMem[phase1]) = (intMem[peq_notify_param_phase1]),
+(delay1) = (peq_notify_param_delay1),
+(peqInUse1) = (true),
+(c1) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id147"/>
+			<target ref="id148"/>
+			<label kind="guard" x="-92" y="-101">(delay1) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id148"/>
+			<target ref="id147"/>
+			<label kind="guard" x="-153" y="-161">(c1) &lt; (delay1)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id148"/>
+			<target ref="id149"/>
+			<label kind="guard" x="93" y="-102">(c1) == (delay1)</label>
+		</transition>
+		<transition>
+			<source ref="id147"/>
+			<target ref="id149"/>
+			<label kind="guard" x="-34" y="-15">(delay1) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id147"/>
+			<target ref="id149"/>
+			<label kind="guard" x="-95" y="28">((delay1) != (0)) &amp;&amp; ((c1) == (delay1))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id149"/>
+			<target ref="id150"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id150"/>
+			<target ref="id151"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id151"/>
+			<target ref="id146"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl1!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran1) = (payload1),
+(peq_fetch_param_phase1) = (phase1),
+(peqInUse1) = (false),
+(delay1) = (0),
+(payload1) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload2</name>
+		<parameter>chan &amp;peq_notify_ctrl2, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans2, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase2, int &amp;peq_notify_param_delay2, chan &amp;peq_fetch_ctrl2, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran2, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase2, bool &amp;peqInUse2, const int phase2</parameter>
+		<declaration>int delay2;
+clock c2;
+int payload2;
+</declaration>
+		<location id="id152" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify_2</name>
+		</location>
+		<location id="id153" x="-152" y="24">
+			<name x="-255" y="-8">peq_notify1_2</name>
+			<label kind="invariant" x="-272" y="17">(c2) &lt;= (delay2)</label>
+		</location>
+		<location id="id154" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2_2</name>
+			<committed/>
+		</location>
+		<location id="id155" x="192" y="24">
+			<name x="170" y="42">peq_notify3_2</name>
+			<committed/>
+		</location>
+		<location id="id156" x="296" y="24">
+			<name x="314" y="34">peq_notify4_2</name>
+			<urgent/>
+		</location>
+		<location id="id157" x="296" y="240">
+			<name x="297" y="255">peq_notify5_2</name>
+			<urgent/>
+		</location>
+		<init ref="id152"/>
+		<transition>
+			<source ref="id152"/>
+			<target ref="id153"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl2?</label>
+			<label kind="assignment" x="-221" y="127">(payload2) = (peq_notify_param_trans2),
+(intMem[phase2]) = (intMem[peq_notify_param_phase2]),
+(delay2) = (peq_notify_param_delay2),
+(peqInUse2) = (true),
+(c2) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id153"/>
+			<target ref="id154"/>
+			<label kind="guard" x="-92" y="-101">(delay2) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id154"/>
+			<target ref="id153"/>
+			<label kind="guard" x="-153" y="-161">(c2) &lt; (delay2)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id154"/>
+			<target ref="id155"/>
+			<label kind="guard" x="93" y="-102">(c2) == (delay2)</label>
+		</transition>
+		<transition>
+			<source ref="id153"/>
+			<target ref="id155"/>
+			<label kind="guard" x="-34" y="-15">(delay2) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id153"/>
+			<target ref="id155"/>
+			<label kind="guard" x="-95" y="28">((delay2) != (0)) &amp;&amp; ((c2) == (delay2))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id155"/>
+			<target ref="id156"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id156"/>
+			<target ref="id157"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id157"/>
+			<target ref="id152"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl2!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran2) = (payload2),
+(peq_fetch_param_phase2) = (phase2),
+(peqInUse2) = (false),
+(delay2) = (0),
+(payload2) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload3</name>
+		<parameter>chan &amp;peq_notify_ctrl3, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans3, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase3, int &amp;peq_notify_param_delay3, chan &amp;peq_fetch_ctrl3, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran3, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase3, bool &amp;peqInUse3, const int phase3</parameter>
+		<declaration>int delay3;
+clock c3;
+int payload3;
+</declaration>
+		<location id="id158" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify_3</name>
+		</location>
+		<location id="id159" x="-152" y="24">
+			<name x="-238" y="-8">peq_notify1_3</name>
+			<label kind="invariant" x="-255" y="17">(c3) &lt;= (delay3)</label>
+		</location>
+		<location id="id160" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2_3</name>
+			<committed/>
+		</location>
+		<location id="id161" x="192" y="24">
+			<name x="170" y="42">peq_notify3_3</name>
+			<committed/>
+		</location>
+		<location id="id162" x="296" y="24">
+			<name x="314" y="34">peq_notify4_3</name>
+			<urgent/>
+		</location>
+		<location id="id163" x="296" y="240">
+			<name x="297" y="255">peq_notify5_3</name>
+			<urgent/>
+		</location>
+		<init ref="id158"/>
+		<transition>
+			<source ref="id158"/>
+			<target ref="id159"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl3?</label>
+			<label kind="assignment" x="-221" y="127">(payload3) = (peq_notify_param_trans3),
+(intMem[phase3]) = (intMem[peq_notify_param_phase3]),
+(delay3) = (peq_notify_param_delay3),
+(peqInUse3) = (true),
+(c3) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id159"/>
+			<target ref="id160"/>
+			<label kind="guard" x="-92" y="-101">(delay3) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id160"/>
+			<target ref="id159"/>
+			<label kind="guard" x="-153" y="-161">(c3) &lt; (delay3)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id160"/>
+			<target ref="id161"/>
+			<label kind="guard" x="93" y="-102">(c3) == (delay3)</label>
+		</transition>
+		<transition>
+			<source ref="id159"/>
+			<target ref="id161"/>
+			<label kind="guard" x="-34" y="-15">(delay3) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id159"/>
+			<target ref="id161"/>
+			<label kind="guard" x="-95" y="28">((delay3) != (0)) &amp;&amp; ((c3) == (delay3))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id161"/>
+			<target ref="id162"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id162"/>
+			<target ref="id163"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id163"/>
+			<target ref="id158"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl3!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran3) = (payload3),
+(peq_fetch_param_phase3) = (phase3),
+(peqInUse3) = (false),
+(delay3) = (0),
+(payload3) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload4</name>
+		<parameter>chan &amp;peq_notify_ctrl4, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans4, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase4, int &amp;peq_notify_param_delay4, chan &amp;peq_fetch_ctrl4, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran4, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase4, bool &amp;peqInUse4, const int phase4</parameter>
+		<declaration>int delay4;
+clock c4;
+int payload4;
+</declaration>
+		<location id="id164" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify_4</name>
+		</location>
+		<location id="id165" x="-152" y="24">
+			<name x="-263" y="-17">peq_notify1_4</name>
+			<label kind="invariant" x="-255" y="17">(c4) &lt;= (delay4)</label>
+		</location>
+		<location id="id166" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2_4</name>
+			<committed/>
+		</location>
+		<location id="id167" x="192" y="24">
+			<name x="170" y="42">peq_notify3_4</name>
+			<committed/>
+		</location>
+		<location id="id168" x="296" y="24">
+			<name x="314" y="34">peq_notify4_4</name>
+			<urgent/>
+		</location>
+		<location id="id169" x="296" y="240">
+			<name x="297" y="255">peq_notify5_4</name>
+			<urgent/>
+		</location>
+		<init ref="id164"/>
+		<transition>
+			<source ref="id164"/>
+			<target ref="id165"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl4?</label>
+			<label kind="assignment" x="-221" y="127">(payload4) = (peq_notify_param_trans4),
+(intMem[phase4]) = (intMem[peq_notify_param_phase4]),
+(delay4) = (peq_notify_param_delay4),
+(peqInUse4) = (true),
+(c4) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id165"/>
+			<target ref="id166"/>
+			<label kind="guard" x="-92" y="-101">(delay4) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id166"/>
+			<target ref="id165"/>
+			<label kind="guard" x="-153" y="-161">(c4) &lt; (delay4)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id166"/>
+			<target ref="id167"/>
+			<label kind="guard" x="93" y="-102">(c4) == (delay4)</label>
+		</transition>
+		<transition>
+			<source ref="id165"/>
+			<target ref="id167"/>
+			<label kind="guard" x="-34" y="-15">(delay4) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id165"/>
+			<target ref="id167"/>
+			<label kind="guard" x="-95" y="28">((delay4) != (0)) &amp;&amp; ((c4) == (delay4))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id167"/>
+			<target ref="id168"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id168"/>
+			<target ref="id169"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id169"/>
+			<target ref="id164"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl4!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran4) = (payload4),
+(peq_fetch_param_phase4) = (phase4),
+(peqInUse4) = (false),
+(delay4) = (0),
+(payload4) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload5</name>
+		<parameter>chan &amp;peq_notify_ctrl5, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans5, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase5, int &amp;peq_notify_param_delay5, chan &amp;peq_fetch_ctrl5, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran5, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase5, bool &amp;peqInUse5, const int phase5</parameter>
+		<declaration>int delay5;
+clock c5;
+int payload5;
+</declaration>
+		<location id="id170" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify_5</name>
+		</location>
+		<location id="id171" x="-152" y="24">
+			<name x="-263" y="-8">peq_notify1_5</name>
+			<label kind="invariant" x="-255" y="17">(c5) &lt;= (delay5)</label>
+		</location>
+		<location id="id172" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2_5</name>
+			<committed/>
+		</location>
+		<location id="id173" x="192" y="24">
+			<name x="170" y="42">peq_notify3_5</name>
+			<committed/>
+		</location>
+		<location id="id174" x="296" y="24">
+			<name x="314" y="34">peq_notify4_5</name>
+			<urgent/>
+		</location>
+		<location id="id175" x="296" y="240">
+			<name x="297" y="255">peq_notify5_5</name>
+			<urgent/>
+		</location>
+		<init ref="id170"/>
+		<transition>
+			<source ref="id170"/>
+			<target ref="id171"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl5?</label>
+			<label kind="assignment" x="-221" y="127">(payload5) = (peq_notify_param_trans5),
+(intMem[phase5]) = (intMem[peq_notify_param_phase5]),
+(delay5) = (peq_notify_param_delay5),
+(peqInUse5) = (true),
+(c5) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id171"/>
+			<target ref="id172"/>
+			<label kind="guard" x="-92" y="-101">(delay5) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id172"/>
+			<target ref="id171"/>
+			<label kind="guard" x="-153" y="-161">(c5) &lt; (delay5)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id172"/>
+			<target ref="id173"/>
+			<label kind="guard" x="93" y="-102">(c5) == (delay5)</label>
+		</transition>
+		<transition>
+			<source ref="id171"/>
+			<target ref="id173"/>
+			<label kind="guard" x="-34" y="-15">(delay5) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id171"/>
+			<target ref="id173"/>
+			<label kind="guard" x="-95" y="28">((delay5) != (0)) &amp;&amp; ((c5) == (delay5))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id173"/>
+			<target ref="id174"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id174"/>
+			<target ref="id175"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id175"/>
+			<target ref="id170"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl5!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran5) = (payload5),
+(peq_fetch_param_phase5) = (phase5),
+(peqInUse5) = (false),
+(delay5) = (0),
+(payload5) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload6</name>
+		<parameter>chan &amp;peq_notify_ctrl6, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans6, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase6, int &amp;peq_notify_param_delay6, chan &amp;peq_fetch_ctrl6, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran6, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase6, bool &amp;peqInUse6, const int phase6</parameter>
+		<declaration>int delay6;
+clock c6;
+int payload6;
+</declaration>
+		<location id="id176" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify_6</name>
+		</location>
+		<location id="id177" x="-152" y="24">
+			<name x="-238" y="-8">peq_notify1_6</name>
+			<label kind="invariant" x="-255" y="17">(c6) &lt;= (delay6)</label>
+		</location>
+		<location id="id178" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2_6</name>
+			<committed/>
+		</location>
+		<location id="id179" x="192" y="24">
+			<name x="170" y="42">peq_notify3_6</name>
+			<committed/>
+		</location>
+		<location id="id180" x="296" y="24">
+			<name x="314" y="34">peq_notify4_6</name>
+			<urgent/>
+		</location>
+		<location id="id181" x="296" y="240">
+			<name x="297" y="255">peq_notify5_6</name>
+			<urgent/>
+		</location>
+		<init ref="id176"/>
+		<transition>
+			<source ref="id176"/>
+			<target ref="id177"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl6?</label>
+			<label kind="assignment" x="-221" y="127">(payload6) = (peq_notify_param_trans6),
+(intMem[phase6]) = (intMem[peq_notify_param_phase6]),
+(delay6) = (peq_notify_param_delay6),
+(peqInUse6) = (true),
+(c6) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id177"/>
+			<target ref="id178"/>
+			<label kind="guard" x="-92" y="-101">(delay6) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id178"/>
+			<target ref="id177"/>
+			<label kind="guard" x="-153" y="-170">(c6) &lt; (delay6)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id178"/>
+			<target ref="id179"/>
+			<label kind="guard" x="93" y="-102">(c6) == (delay6)</label>
+		</transition>
+		<transition>
+			<source ref="id177"/>
+			<target ref="id179"/>
+			<label kind="guard" x="-34" y="-15">(delay6) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id177"/>
+			<target ref="id179"/>
+			<label kind="guard" x="-93" y="25">((delay6) != (0)) &amp;&amp; ((c6) == (delay6))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id179"/>
+			<target ref="id180"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id180"/>
+			<target ref="id181"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id181"/>
+			<target ref="id176"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl6!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran6) = (payload6),
+(peq_fetch_param_phase6) = (phase6),
+(peqInUse6) = (false),
+(delay6) = (0),
+(payload6) = (0)</label>
+		</transition>
+	</template>
+	<template>
+		<name>peq_notify_payload7</name>
+		<parameter>chan &amp;peq_notify_ctrl7, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_notify_param_trans7, int[-1, INT_MEMSIZE-1] &amp;peq_notify_param_phase7, int &amp;peq_notify_param_delay7, chan &amp;peq_fetch_ctrl7, int[-1, PAYLOAD_MEMSIZE-1] &amp;peq_fetch_param_tran7, int[-1, INT_MEMSIZE-1] &amp;peq_fetch_param_phase7, bool &amp;peqInUse7, const int phase7</parameter>
+		<declaration>int delay7;
+clock c7;
+int payload7;
+</declaration>
+		<location id="id182" x="-152" y="240">
+			<name x="-263" y="255">init_location_peq_notify_7</name>
+		</location>
+		<location id="id183" x="-152" y="24">
+			<name x="-263" y="-8">peq_notify1_7</name>
+			<label kind="invariant" x="-255" y="17">(c7) &lt;= (delay7)</label>
+		</location>
+		<location id="id184" x="42" y="-178">
+			<name x="32" y="-212">peq_notify2_7</name>
+			<committed/>
+		</location>
+		<location id="id185" x="192" y="24">
+			<name x="170" y="42">peq_notify3</name>
+			<committed/>
+		</location>
+		<location id="id186" x="296" y="24">
+			<name x="314" y="34">peq_notify4_7</name>
+			<urgent/>
+		</location>
+		<location id="id187" x="296" y="240">
+			<name x="297" y="255">peq_notify5_7</name>
+			<urgent/>
+		</location>
+		<init ref="id182"/>
+		<transition>
+			<source ref="id182"/>
+			<target ref="id183"/>
+			<label kind="synchronisation" x="-212" y="102">peq_notify_ctrl7?</label>
+			<label kind="assignment" x="-221" y="127">(payload7) = (peq_notify_param_trans7),
+(intMem[phase7]) = (intMem[peq_notify_param_phase7]),
+(delay7) = (peq_notify_param_delay7),
+(peqInUse7) = (true),
+(c7) = (0)</label>
+		</transition>
+		<transition>
+			<source ref="id183"/>
+			<target ref="id184"/>
+			<label kind="guard" x="-93" y="-102">(delay7) != (0)</label>
+			<label kind="synchronisation" x="-68" y="-85">advancetime?</label>
+		</transition>
+		<transition>
+			<source ref="id184"/>
+			<target ref="id183"/>
+			<label kind="guard" x="-153" y="-161">(c7) &lt; (delay7)</label>
+			<nail x="-127" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id184"/>
+			<target ref="id185"/>
+			<label kind="guard" x="93" y="-102">(c7) == (delay7)</label>
+		</transition>
+		<transition>
+			<source ref="id183"/>
+			<target ref="id185"/>
+			<label kind="guard" x="-34" y="-15">(delay7) == (0)</label>
+			<label kind="synchronisation" x="-34" y="0">deltadelay?</label>
+			<nail x="14" y="-24"/>
+		</transition>
+		<transition>
+			<source ref="id183"/>
+			<target ref="id185"/>
+			<label kind="guard" x="-95" y="28">((delay7) != (0)) &amp;&amp; ((c7) == (delay7))</label>
+			<label kind="synchronisation" x="-95" y="44">advancetime!</label>
+			<nail x="17" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id185"/>
+			<target ref="id186"/>
+			<label kind="assignment" x="200" y="-8">readyprocs = readyprocs+1</label>
+		</transition>
+		<transition>
+			<source ref="id186"/>
+			<target ref="id187"/>
+			<label kind="synchronisation" x="240" y="104">activate?</label>
+		</transition>
+		<transition>
+			<source ref="id187"/>
+			<target ref="id182"/>
+			<label kind="synchronisation" x="-17" y="348">peq_fetch_ctrl7!</label>
+			<label kind="assignment" x="-17" y="246">(peq_fetch_param_tran7) = (payload7),
+(peq_fetch_param_phase7) = (phase7),
+(peqInUse7) = (false),
+(delay7) = (0),
+(payload7) = (0)</label>
+		</transition>
+	</template>
+	<system>
+initialization = InitializerTemplate();
+initiator_Initiator_allocate = Initiator_allocate(initiator_mem, initiator_freeIndex, initiator_count, initiator_allocate_ctrl, initiator_allocate_return);
+initiator_Initiator_check_transaction = Initiator_check_transaction(initiator_free_ctrl, initiator_free_param_tran, initiator_check_transaction_ctrl, initiator_check_transaction_param_tran);
+initiator_Initiator_free = Initiator_free(initiator_firstIndex, initiator_count, initiator_free_ctrl, initiator_free_param_tran);
+initiator_Initiator_peq_cb = Initiator_peq_cb(target_nb_transport_fw_ctrl, target_nb_transport_fw_param_tran, target_nb_transport_fw_param_phase, target_nb_transport_fw_param_t, target_nb_transport_fw_return, initiator_request_in_progress, initiator_end_request_event_notify_imm, initiator_check_transaction_ctrl, initiator_check_transaction_param_tran, initiator_peq_cb_ctrl, initiator_peq_cb_param_tran, initiator_peq_cb_param_phase, initiator_Initiator_peq_cb_local_delay, initiator_Initiator_peq_cb_local_fw_phase);
+initiator_end_request_event = SCEventTemplate(initiator_end_request_event_wait, initiator_end_request_event_notify, initiator_end_request_event_notify_imm, initiator_end_request_event_notify_t);
+initiator_m_peq_peq_dispatch = peq_dispatcher_payload(initiator_m_peq_peq_dispatcher_ctrl, initiator_m_peq_peq_notify_ctrl, initiator_m_peq_peqInUse);
+initiator_m_peq_peq_fetch = peq_fetch_payload(initiator_m_peq_peq_fetch_ctrl, initiator_m_peq_peq_fetch_param_tran, initiator_m_peq_peq_fetch_param_phase, initiator_peq_cb_ctrl, initiator_peq_cb_param_tran, initiator_peq_cb_param_phase);
+initiator_m_peq_peq_notify0 = peq_notify_payload(initiator_m_peq_peq_notify_ctrl[0], initiator_m_peq_peq_notify_param_trans, initiator_m_peq_peq_notify_param_phase, initiator_m_peq_peq_notify_param_delay, initiator_m_peq_peq_fetch_ctrl, initiator_m_peq_peq_fetch_param_tran, initiator_m_peq_peq_fetch_param_phase, initiator_m_peq_peqInUse[0], initiator_m_peq_peq_notify0_local_phase);
+initiator_m_peq_peq_notify1 = peq_notify_payload1(initiator_m_peq_peq_notify_ctrl[1], initiator_m_peq_peq_notify_param_trans, initiator_m_peq_peq_notify_param_phase, initiator_m_peq_peq_notify_param_delay, initiator_m_peq_peq_fetch_ctrl, initiator_m_peq_peq_fetch_param_tran, initiator_m_peq_peq_fetch_param_phase, initiator_m_peq_peqInUse[1], initiator_m_peq_peq_notify1_local_phase);
+initiator_m_peq_peq_notify2 = peq_notify_payload2(initiator_m_peq_peq_notify_ctrl[2], initiator_m_peq_peq_notify_param_trans, initiator_m_peq_peq_notify_param_phase, initiator_m_peq_peq_notify_param_delay, initiator_m_peq_peq_fetch_ctrl, initiator_m_peq_peq_fetch_param_tran, initiator_m_peq_peq_fetch_param_phase, initiator_m_peq_peqInUse[2], initiator_m_peq_peq_notify2_local_phase);
+initiator_m_peq_peq_notify3 = peq_notify_payload3(initiator_m_peq_peq_notify_ctrl[3], initiator_m_peq_peq_notify_param_trans, initiator_m_peq_peq_notify_param_phase, initiator_m_peq_peq_notify_param_delay, initiator_m_peq_peq_fetch_ctrl, initiator_m_peq_peq_fetch_param_tran, initiator_m_peq_peq_fetch_param_phase, initiator_m_peq_peqInUse[3], initiator_m_peq_peq_notify3_local_phase);
+initiator_thread0_Initiator_thread_process = Initiator_thread_process(initiator_thread0_timeoutevent_wait, initiator_thread0_timeoutevent_notify, initiator_thread0_timeoutevent_notify_t, target_nb_transport_fw_ctrl, target_nb_transport_fw_param_tran, target_nb_transport_fw_param_phase, target_nb_transport_fw_param_t, target_nb_transport_fw_return, target_b_transport_ctrl, target_b_transport_param_tran, target_b_transport_param_t, initiator_m_peq_peq_dispatcher_ctrl, initiator_m_peq_peq_notify_param_trans, initiator_m_peq_peq_notify_param_phase, initiator_m_peq_peq_notify_param_delay, initiator_data, initiator_request_in_progress, initiator_end_request_event_wait, initiator_allocate_ctrl, initiator_allocate_return, initiator_check_transaction_ctrl, initiator_check_transaction_param_tran, initiator_thread0_thread_process_ctrl, initiator_thread0_Initiator_thread_process_local_phase, initiator_thread0_Initiator_thread_process_local_delay);
+initiator_thread0_sensitive = Initiator_thread0_sensitiveTemp(initiator_thread0_sensitivechan);
+initiator_thread0_starter = ThreadStarterTemplate(initiator_thread0_thread_process_ctrl);
+initiator_thread0_timeoutevent = SCEventTemplate1(initiator_thread0_timeoutevent_wait, initiator_thread0_timeoutevent_notify, initiator_thread0_timeoutevent_notify_imm, initiator_thread0_timeoutevent_notify_t);
+scheduler = SchedulerTemplate();
+target_Target_b_transport = Target_b_transport(target_b_transport_ctrl);
+target_Target_nb_transport_fw = Target_nb_transport_fw(target_m_peq_peq_dispatcher_ctrl, target_m_peq_peq_notify_param_trans, target_m_peq_peq_notify_param_phase, target_m_peq_peq_notify_param_delay, target_nb_transport_fw_ctrl, target_nb_transport_fw_param_tran, target_nb_transport_fw_param_phase, target_nb_transport_fw_param_t, target_nb_transport_fw_return);
+target_Target_peq_cb = Target_peq_cb(target_n_trans, target_response_in_progress, target_next_response_pending, target_end_req_pending, target_peq_cb_ctrl, target_peq_cb_param_tran, target_peq_cb_param_phase);
+target_m_peq_peq_dispatch = peq_dispatcher_payload1(target_m_peq_peq_dispatcher_ctrl, target_m_peq_peq_notify_ctrl, target_m_peq_peqInUse);
+target_m_peq_peq_fetch = peq_fetch_payload1(target_m_peq_peq_fetch_ctrl, target_m_peq_peq_fetch_param_tran, target_m_peq_peq_fetch_param_phase, target_peq_cb_ctrl, target_peq_cb_param_tran, target_peq_cb_param_phase);
+target_m_peq_peq_notify0 = peq_notify_payload4(target_m_peq_peq_notify_ctrl[0], target_m_peq_peq_notify_param_trans, target_m_peq_peq_notify_param_phase, target_m_peq_peq_notify_param_delay, target_m_peq_peq_fetch_ctrl, target_m_peq_peq_fetch_param_tran, target_m_peq_peq_fetch_param_phase, target_m_peq_peqInUse[0], target_m_peq_peq_notify0_local_phase);
+target_m_peq_peq_notify1 = peq_notify_payload5(target_m_peq_peq_notify_ctrl[1], target_m_peq_peq_notify_param_trans, target_m_peq_peq_notify_param_phase, target_m_peq_peq_notify_param_delay, target_m_peq_peq_fetch_ctrl, target_m_peq_peq_fetch_param_tran, target_m_peq_peq_fetch_param_phase, target_m_peq_peqInUse[1], target_m_peq_peq_notify1_local_phase);
+target_m_peq_peq_notify2 = peq_notify_payload6(target_m_peq_peq_notify_ctrl[2], target_m_peq_peq_notify_param_trans, target_m_peq_peq_notify_param_phase, target_m_peq_peq_notify_param_delay, target_m_peq_peq_fetch_ctrl, target_m_peq_peq_fetch_param_tran, target_m_peq_peq_fetch_param_phase, target_m_peq_peqInUse[2], target_m_peq_peq_notify2_local_phase);
+target_m_peq_peq_notify3 = peq_notify_payload7(target_m_peq_peq_notify_ctrl[3], target_m_peq_peq_notify_param_trans, target_m_peq_peq_notify_param_phase, target_m_peq_peq_notify_param_delay, target_m_peq_peq_fetch_ctrl, target_m_peq_peq_fetch_param_tran, target_m_peq_peq_fetch_param_phase, target_m_peq_peqInUse[3], target_m_peq_peq_notify3_local_phase);
+
+
+
+system initialization,
+initiator_Initiator_allocate,
+initiator_Initiator_check_transaction,
+initiator_Initiator_free,
+initiator_Initiator_peq_cb,
+initiator_end_request_event,
+initiator_m_peq_peq_dispatch,
+initiator_m_peq_peq_fetch,
+initiator_m_peq_peq_notify0,
+initiator_m_peq_peq_notify1,
+initiator_m_peq_peq_notify2,
+initiator_m_peq_peq_notify3,
+initiator_thread0_Initiator_thread_process,
+initiator_thread0_sensitive,
+initiator_thread0_starter,
+initiator_thread0_timeoutevent,
+scheduler,
+target_Target_b_transport,
+target_Target_nb_transport_fw,
+target_Target_peq_cb,
+target_m_peq_peq_dispatch,
+target_m_peq_peq_fetch,
+target_m_peq_peq_notify0,
+target_m_peq_peq_notify1,
+target_m_peq_peq_notify2,
+target_m_peq_peq_notify3;</system>
+	<queries>
+		<query>
+			<formula>scheduler.update imply not (scheduler.evaluate)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>scheduler.evaluate --&gt; scheduler.execute
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>scheduler.execute --&gt; scheduler.evaluate
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; scheduler.execute
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; initiator_Initiator_free.Init_free1
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; scheduler.evaluate
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; initiator_Initiator_check_transaction.init_check_tran1
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>initiator_thread0_starter.thread_starter1 --&gt; initiator_thread0_starter.thread_starter5
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>initiator_thread0_Initiator_thread_process.Init_thread_process20 --&gt; target_Target_nb_transport_fw.nb_fw1
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>initiator_thread0_Initiator_thread_process.init_location_thread_process --&gt; initiator_thread0_Initiator_thread_process.Init_thread_process12
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>
